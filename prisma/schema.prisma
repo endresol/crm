@@ -1,0 +1,61 @@
+// ClientManager clone — Prisma schema
+// Phase 1 (auth): Workspace, User, Session
+// Phase 2 (clients) and Phase 3 (time tracking) models are added additively below
+// as those phases land — see /SPEC.md and /docs/feature-audit for the full target model.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A tenant. Every User and every piece of business data (Client, TimeEntry, ...)
+/// belongs to exactly one Workspace.
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@map("workspaces")
+}
+
+enum UserRole {
+  MASTER_ADMIN
+}
+
+/// An admin-app principal (as opposed to a future Client Portal Contact principal).
+model User {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(MASTER_ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sessions  Session[]
+
+  @@index([workspaceId])
+  @@map("users")
+}
+
+/// A server-side, DB-backed session. The httpOnly cookie only ever holds this row's id.
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
