@@ -22,6 +22,7 @@ model Workspace {
 
   users            User[]
   clients          Client[]
+  contacts         Contact[]
   timeEntries      TimeEntry[]
   projects         Project[]
   tasks            Task[]
@@ -86,9 +87,32 @@ model Client {
   workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   timeEntries TimeEntry[]
   projects    Project[]
+  contacts    Contact[]
 
   @@index([workspaceId])
   @@map("clients")
+}
+
+/// A person belonging to a Client (roadmap #1). Trimmed field set for now — no
+/// status/source/type/role/social links yet, those enums weren't observable in
+/// the audit. See docs/feature-audit/02-contacts.md for the full real-product model.
+model Contact {
+  id          String   @id @default(cuid())
+  workspaceId String
+  clientId    String
+  fullName    String
+  jobTitle    String?
+  email       String?
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@map("contacts")
 }
 
 enum ProjectStatus {

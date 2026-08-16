@@ -1,29 +1,21 @@
 # Feature backlog (Phase 4+)
 
-Everything below is *not yet built*. Auth, Clients, and Time Tracking (scoped to Client) are done — see git log / SPEC.md.
+Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client), **Contacts** (#1),
+**Products & Pricing** (#2), **Projects** (#9), **Tasks** (#10), **Milestones** (#11),
+**Gantt chart view** (#12), **Upgrade Time Tracking to log against Project/Task** (#13).
+
+Everything below this line is *not yet built*.
 
 Pick items in whatever order you like — just respect the "Requires" line. Items with no "Requires" line have no dependency on anything in this list and can be built anytime.
 
-1. **Contacts** — people belonging to a Client (name, email, phone, role).
-2. **Products & Pricing** — catalog of products/services, plus discounts and price books.
 3. **SOPs** — internal rich-text documents (standalone knowledge base).
 4. **Calendar** — basic events (add/view, month view).
 5. **Team members & roles** — invite more users into a workspace, roles beyond Master Admin.
 6. **Workspace settings** — name, branding colors, timezone/currency/date format.
 7. **Deals** — sales pipeline with kanban stages.
-   Requires: **Contacts** (#1)
+   Requires: **Contacts** (#1) — done, see above
 8. **Leads** — pre-client pipeline with a "Convert to Client" action.
-   Requires: **Contacts** (#1) — conversion creates a Client + Contact
-9. **Projects** — belongs to a Client.
-   Requires: nothing new (Clients already exist)
-10. **Tasks** — kanban status (To Do/Doing/Done...), due dates, assignees.
-    Requires: **Projects** (#9)
-11. **Milestones** — group Tasks within a Project.
-    Requires: **Projects** (#9), **Tasks** (#10)
-12. **Gantt chart view** — timeline view of Tasks/Milestones.
-    Requires: **Tasks** (#10), **Milestones** (#11)
-13. **Upgrade Time Tracking to log against Project/Task** (currently only logs against a Client).
-    Requires: **Projects** (#9), **Tasks** (#10)
+   Requires: **Contacts** (#1) — done, see above; conversion creates a Client + Contact
 14. **Document Templates system** — shared template/builder infrastructure used by Invoices, Proposals, Contracts, and Questionnaires. Build this before #16–18.
 15. **Invoices** — billing documents with line items.
     Requires: **Products & Pricing** (#2). Templates (#14) optional, not required.

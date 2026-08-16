@@ -40,6 +40,22 @@ export function PeopleIcon(props: IconProps) {
   );
 }
 
+export function ContactIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="2.5" y="4" width="15" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="7.75" cy="9.25" r="1.75" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M4.75 13.5c0-1.52 1.34-2.5 3-2.5s3 .98 3 2.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path d="M12.25 8.5h2.75M12.25 11h2.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

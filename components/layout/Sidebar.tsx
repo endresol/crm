@@ -7,6 +7,7 @@ import styles from "./Sidebar.module.css";
 import {
   BriefcaseIcon,
   ClockIcon,
+  ContactIcon,
   GridIcon,
   LogOutIcon,
   PeopleIcon,
@@ -30,6 +31,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> },
       { href: "/admin/clients", label: "Clients", icon: (p) => <PeopleIcon {...p} /> },
+      { href: "/admin/contacts", label: "Contacts", icon: (p) => <ContactIcon {...p} /> },
     ],
   },
   {

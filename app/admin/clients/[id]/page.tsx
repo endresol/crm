@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getClient } from "@/features/clients/service";
 import { listTimeEntriesForClient, listClientsForLogging } from "@/features/time-entries/service";
 import { listProjectsForClient } from "@/features/projects/service";
+import { listContactsForClient } from "@/features/contacts/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -14,6 +15,7 @@ import { DeleteClientButton } from "@/features/clients/components/DeleteClientBu
 import { LogTimeButton } from "@/features/time-entries/components/LogTimeButton";
 import { TimeEntriesList } from "@/features/time-entries/components/TimeEntriesList";
 import { AddProjectButton } from "@/features/projects/components/AddProjectButton";
+import { AddContactButton } from "@/features/contacts/components/AddContactButton";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ClientDetailPage({
@@ -28,9 +30,10 @@ export default async function ClientDetailPage({
   const client = await getClient(user.workspaceId, id);
   if (!client) notFound();
 
-  const [timeEntries, projects, clientsForLogging] = await Promise.all([
+  const [timeEntries, projects, contacts, clientsForLogging] = await Promise.all([
     listTimeEntriesForClient(user.workspaceId, client.id),
     listProjectsForClient(user.workspaceId, client.id),
+    listContactsForClient(user.workspaceId, client.id),
     listClientsForLogging(user.workspaceId),
   ]);
 
@@ -121,6 +124,47 @@ export default async function ClientDetailPage({
                     <Badge variant={PROJECT_STATUS_BADGE_VARIANT[project.status]}>
                       {PROJECT_STATUS_LABELS[project.status]}
                     </Badge>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <Card>
+            <CardHeader
+              title="Contacts"
+              subtitle={`${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`}
+              action={<AddContactButton fixedClientId={client.id} label="New contact" />}
+            />
+            {contacts.length === 0 ? (
+              <p style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                No contacts yet for this client.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                {contacts.map((contact) => (
+                  <Link
+                    key={contact.id}
+                    href={`/admin/contacts/${contact.id}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "var(--space-3) var(--space-4)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+                      <Avatar name={contact.fullName} size="sm" />
+                      <span style={{ fontWeight: 600 }}>{contact.fullName}</span>
+                    </span>
+                    <span style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                      {contact.jobTitle || contact.email || "—"}
+                    </span>
                   </Link>
                 ))}
               </div>
