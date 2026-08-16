@@ -3,11 +3,13 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getProject } from "@/features/projects/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
+import { listTasksForProject } from "@/features/tasks/service";
 import { Topbar } from "@/components/layout/Topbar";
-import { Card } from "@/components/ui/Card";
+import { Card, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EditProjectButton } from "@/features/projects/components/EditProjectButton";
 import { DeleteProjectButton } from "@/features/projects/components/DeleteProjectButton";
+import { TaskBoard } from "@/features/tasks/components/TaskBoard";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ProjectDetailPage({
@@ -21,6 +23,8 @@ export default async function ProjectDetailPage({
   const { id } = await params;
   const project = await getProject(user.workspaceId, id);
   if (!project) notFound();
+
+  const tasks = await listTasksForProject(user.workspaceId, project.id);
 
   return (
     <>
@@ -90,6 +94,13 @@ export default async function ProjectDetailPage({
             />
           </dl>
         </Card>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <Card>
+            <CardHeader title="Tasks" subtitle={`${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`} />
+            <TaskBoard tasks={tasks} projectId={project.id} />
+          </Card>
+        </div>
       </div>
     </>
   );

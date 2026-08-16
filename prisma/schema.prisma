@@ -24,6 +24,7 @@ model Workspace {
   clients     Client[]
   timeEntries TimeEntry[]
   projects    Project[]
+  tasks       Task[]
 
   @@map("workspaces")
 }
@@ -108,10 +109,43 @@ model Project {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks     Task[]
 
   @@index([workspaceId])
   @@index([clientId])
   @@map("projects")
+}
+
+/// Matches the real product's task-status set (see docs/feature-audit/07-projects-tasks.md),
+/// used for both the kanban board and the future Gantt legend.
+enum TaskStatus {
+  TODO
+  DOING
+  READY_FOR_QA
+  BLOCKED
+  DONE
+}
+
+/// A unit of work within a Project. Trimmed field set for now (no assignees yet —
+/// that needs multi-user workspaces, see roadmap #5) — see docs/feature-audit/07-projects-tasks.md
+/// for the full real-product model.
+model Task {
+  id          String     @id @default(cuid())
+  workspaceId String
+  projectId   String
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  dueDate     DateTime?  @db.Date
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@map("tasks")
 }
 
 /// A logged block of time worked for a Client. Trimmed field set for now —
