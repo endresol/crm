@@ -20,8 +20,9 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users   User[]
-  clients Client[]
+  users       User[]
+  clients     Client[]
+  timeEntries TimeEntry[]
 
   @@map("workspaces")
 }
@@ -41,8 +42,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  sessions  Session[]
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sessions    Session[]
+  timeEntries TimeEntry[]
 
   @@index([workspaceId])
   @@map("users")
@@ -74,8 +76,31 @@ model Client {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  timeEntries TimeEntry[]
 
   @@index([workspaceId])
   @@map("clients")
+}
+
+/// A logged block of time worked for a Client. Trimmed field set for now —
+/// see docs/feature-audit/08-time-tracking.md for the full real-product model.
+model TimeEntry {
+  id          String   @id @default(cuid())
+  workspaceId String
+  clientId    String
+  userId      String
+  minutes     Int
+  description String?
+  date        DateTime @db.Date
+  billable    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@map("time_entries")
 }

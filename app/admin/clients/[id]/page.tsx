@@ -2,11 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getClient } from "@/features/clients/service";
+import { listTimeEntriesForClient } from "@/features/time-entries/service";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { EditClientButton } from "@/features/clients/components/EditClientButton";
 import { DeleteClientButton } from "@/features/clients/components/DeleteClientButton";
+import { LogTimeButton } from "@/features/time-entries/components/LogTimeButton";
+import { TimeEntriesList } from "@/features/time-entries/components/TimeEntriesList";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ClientDetailPage({
@@ -21,6 +24,8 @@ export default async function ClientDetailPage({
   const client = await getClient(user.workspaceId, id);
   if (!client) notFound();
 
+  const timeEntries = await listTimeEntriesForClient(user.workspaceId, client.id);
+
   return (
     <>
       <Topbar
@@ -28,6 +33,7 @@ export default async function ClientDetailPage({
         subtitle="Client details"
         actions={
           <>
+            <LogTimeButton fixedClientId={client.id} />
             <EditClientButton client={client} />
             <DeleteClientButton clientId={client.id} />
           </>
@@ -75,6 +81,10 @@ export default async function ClientDetailPage({
             <Field label="Industry" value={client.industry} />
           </dl>
         </Card>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <TimeEntriesList entries={timeEntries} clientId={client.id} />
+        </div>
       </div>
     </>
   );
