@@ -56,6 +56,28 @@ export function ContactIcon(props: IconProps) {
   );
 }
 
+export function DealIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        d="M3 13.5l4-4 3 3 6-6.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12.5 5.5H16v3.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M3 16h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

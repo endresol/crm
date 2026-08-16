@@ -5,7 +5,9 @@ import { getClient } from "@/features/clients/service";
 import { listTimeEntriesForClient, listClientsForLogging } from "@/features/time-entries/service";
 import { listProjectsForClient } from "@/features/projects/service";
 import { listContactsForClient } from "@/features/contacts/service";
+import { listDealsForClient } from "@/features/deals/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
+import { DEAL_STAGE_BADGE_VARIANT, DEAL_STAGE_LABELS } from "@/features/deals/constants";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -16,6 +18,8 @@ import { LogTimeButton } from "@/features/time-entries/components/LogTimeButton"
 import { TimeEntriesList } from "@/features/time-entries/components/TimeEntriesList";
 import { AddProjectButton } from "@/features/projects/components/AddProjectButton";
 import { AddContactButton } from "@/features/contacts/components/AddContactButton";
+import { AddDealButton } from "@/features/deals/components/AddDealButton";
+import { formatCurrency } from "@/lib/format";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ClientDetailPage({
@@ -30,10 +34,11 @@ export default async function ClientDetailPage({
   const client = await getClient(user.workspaceId, id);
   if (!client) notFound();
 
-  const [timeEntries, projects, contacts, clientsForLogging] = await Promise.all([
+  const [timeEntries, projects, contacts, deals, clientsForLogging] = await Promise.all([
     listTimeEntriesForClient(user.workspaceId, client.id),
     listProjectsForClient(user.workspaceId, client.id),
     listContactsForClient(user.workspaceId, client.id),
+    listDealsForClient(user.workspaceId, client.id),
     listClientsForLogging(user.workspaceId),
   ]);
 
@@ -166,6 +171,57 @@ export default async function ClientDetailPage({
                       {contact.jobTitle || contact.email || "—"}
                     </span>
                   </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <Card>
+            <CardHeader
+              title="Deals"
+              subtitle={`${deals.length} ${deals.length === 1 ? "deal" : "deals"}`}
+              action={
+                <AddDealButton
+                  fixedClientId={client.id}
+                  contacts={contacts.map((contact) => ({
+                    id: contact.id,
+                    fullName: contact.fullName,
+                    clientId: contact.clientId,
+                  }))}
+                  label="New deal"
+                />
+              }
+            />
+            {deals.length === 0 ? (
+              <p style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                No deals yet for this client.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                {deals.map((deal) => (
+                  <div
+                    key={deal.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "var(--space-3) var(--space-4)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{deal.name}</div>
+                      <div style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                        {formatCurrency(deal.amount, deal.currency)}
+                      </div>
+                    </div>
+                    <Badge variant={DEAL_STAGE_BADGE_VARIANT[deal.stage]}>
+                      {DEAL_STAGE_LABELS[deal.stage]}
+                    </Badge>
+                  </div>
                 ))}
               </div>
             )}

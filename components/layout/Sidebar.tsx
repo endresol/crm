@@ -8,6 +8,7 @@ import {
   BriefcaseIcon,
   ClockIcon,
   ContactIcon,
+  DealIcon,
   GridIcon,
   LogOutIcon,
   PeopleIcon,
@@ -28,10 +29,14 @@ type NavGroup = {
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "Workspace",
+    items: [{ href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> }],
+  },
+  {
+    label: "CRM",
     items: [
-      { href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> },
       { href: "/admin/clients", label: "Clients", icon: (p) => <PeopleIcon {...p} /> },
       { href: "/admin/contacts", label: "Contacts", icon: (p) => <ContactIcon {...p} /> },
+      { href: "/admin/deals", label: "Deals", icon: (p) => <DealIcon {...p} /> },
     ],
   },
   {

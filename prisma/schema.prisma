@@ -23,6 +23,7 @@ model Workspace {
   users            User[]
   clients          Client[]
   contacts         Contact[]
+  deals            Deal[]
   timeEntries      TimeEntry[]
   projects         Project[]
   tasks            Task[]
@@ -88,6 +89,7 @@ model Client {
   timeEntries TimeEntry[]
   projects    Project[]
   contacts    Contact[]
+  deals       Deal[]
 
   @@index([workspaceId])
   @@map("clients")
@@ -109,10 +111,61 @@ model Contact {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deals     Deal[]
 
   @@index([workspaceId])
   @@index([clientId])
   @@map("contacts")
+}
+
+/// Matches the real product's kanban lane set (see docs/feature-audit/03-deals.md).
+/// Closed outcomes are stages rather than a separate Status field — the audit's
+/// Stage and Status fields overlapped enough (both end at "closed") that we
+/// collapsed them into one, same trimming approach as Contact dropping its
+/// unclear enum fields.
+enum DealStage {
+  PROSPECTING
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum DealPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// A sales opportunity attached to a Client (+ optional Contact), moving through
+/// pipeline Stages toward Closed Won/Lost (roadmap #7). Trimmed field set for now
+/// (no deal_no, deal type, discount, lead source, or next-follow-up date yet) —
+/// see docs/feature-audit/03-deals.md for the full real-product model.
+model Deal {
+  id                String       @id @default(cuid())
+  workspaceId       String
+  clientId          String
+  contactId         String?
+  name              String
+  description       String?
+  amount            Float        @default(0)
+  currency          String       @default("USD")
+  stage             DealStage    @default(PROSPECTING)
+  priority          DealPriority @default(MEDIUM)
+  expectedCloseDate DateTime?    @db.Date
+  nextStep          String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@index([contactId])
+  @@map("deals")
 }
 
 enum ProjectStatus {
