@@ -20,7 +20,8 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  users   User[]
+  clients Client[]
 
   @@map("workspaces")
 }
@@ -58,4 +59,23 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+/// A client the workspace does business with. Trimmed field set for now —
+/// see docs/feature-audit/01-clients.md for the full real-product model.
+model Client {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  legalName   String?
+  email       String?
+  website     String?
+  industry    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("clients")
 }
