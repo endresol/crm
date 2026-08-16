@@ -1,6 +1,7 @@
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Table, TableEmptyState, TableRow } from "@/components/ui/Table";
+import { formatDate } from "@/lib/format";
 import { DeleteTimeEntryButton } from "./DeleteTimeEntryButton";
 import { formatMinutes } from "../service";
 import type { TimeEntry } from "@/generated/prisma/client";
@@ -42,7 +43,7 @@ export function TimeEntriesList({
           ) : (
             entries.map((entry) => (
               <TableRow key={entry.id}>
-                <td>{new Date(entry.date).toLocaleDateString()}</td>
+                <td>{formatDate(entry.date)}</td>
                 <td>{entry.description || "—"}</td>
                 <td>{entry.user.name}</td>
                 <td>{formatMinutes(entry.minutes)}</td>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { formatDate } from "@/lib/format";
 import { listProjects } from "@/features/projects/service";
 import { listClients } from "@/features/clients/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
@@ -68,8 +69,8 @@ export default async function ProjectsPage() {
                       {PROJECT_STATUS_LABELS[project.status]}
                     </Badge>
                   </td>
-                  <td>{project.startDate ? new Date(project.startDate).toLocaleDateString() : "—"}</td>
-                  <td>{project.endDate ? new Date(project.endDate).toLocaleDateString() : "—"}</td>
+                  <td>{project.startDate ? formatDate(project.startDate) : "—"}</td>
+                  <td>{project.endDate ? formatDate(project.endDate) : "—"}</td>
                 </TableRow>
               ))
             )}

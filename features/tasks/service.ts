@@ -6,6 +6,7 @@ import type { TaskInput } from "./schemas";
 export function listTasksForProject(workspaceId: string, projectId: string) {
   return prisma.task.findMany({
     where: { workspaceId, projectId },
+    include: { milestone: { select: { name: true } } },
     orderBy: { createdAt: "asc" },
   });
 }
@@ -19,6 +20,8 @@ function toData(input: TaskInput) {
     title: input.title,
     description: input.description,
     status: input.status,
+    milestoneId: input.milestoneId ?? null,
+    startDate: input.startDate ? new Date(input.startDate) : null,
     dueDate: input.dueDate ? new Date(input.dueDate) : null,
   };
 }

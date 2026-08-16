@@ -3,70 +3,66 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { taskSchema } from "./schemas";
-import { createTask, deleteTask, updateTask } from "./service";
+import { milestoneSchema } from "./schemas";
+import { createMilestone, deleteMilestone, updateMilestone } from "./service";
 
-export type TaskActionState = {
+export type MilestoneActionState = {
   error?: string;
   success?: boolean;
 };
 
-function parseTaskForm(formData: FormData) {
-  return taskSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    status: formData.get("status") || "TODO",
-    milestoneId: formData.get("milestoneId"),
-    startDate: formData.get("startDate"),
+function parseMilestoneForm(formData: FormData) {
+  return milestoneSchema.safeParse({
+    name: formData.get("name"),
     dueDate: formData.get("dueDate"),
   });
 }
 
-export async function createTaskAction(
+export async function createMilestoneAction(
   projectId: string,
-  _prevState: TaskActionState,
+  _prevState: MilestoneActionState,
   formData: FormData,
-): Promise<TaskActionState> {
+): Promise<MilestoneActionState> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const parsed = parseTaskForm(formData);
+  const parsed = parseMilestoneForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
-  await createTask(user.workspaceId, projectId, parsed.data);
+  await createMilestone(user.workspaceId, projectId, parsed.data);
   revalidatePath(`/admin/projects/${projectId}`);
   return { success: true };
 }
 
-export async function updateTaskAction(
-  taskId: string,
+export async function updateMilestoneAction(
+  milestoneId: string,
   projectId: string,
-  _prevState: TaskActionState,
+  _prevState: MilestoneActionState,
   formData: FormData,
-): Promise<TaskActionState> {
+): Promise<MilestoneActionState> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const parsed = parseTaskForm(formData);
+  const parsed = parseMilestoneForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
-  const updated = await updateTask(user.workspaceId, taskId, parsed.data);
+  const updated = await updateMilestone(user.workspaceId, milestoneId, parsed.data);
   if (!updated) {
-    return { error: "That task no longer exists." };
+    return { error: "That milestone no longer exists." };
   }
 
   revalidatePath(`/admin/projects/${projectId}`);
   return { success: true };
 }
 
-export async function deleteTaskAction(taskId: string, projectId: string) {
+export async function deleteMilestoneAction(milestoneId: string, projectId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteTask(user.workspaceId, taskId);
+  await deleteMilestone(user.workspaceId, milestoneId);
   revalidatePath(`/admin/projects/${projectId}`);
 }

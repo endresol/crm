@@ -1,15 +1,18 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
+import { formatDate } from "@/lib/format";
 import { getProject } from "@/features/projects/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
 import { listTasksForProject } from "@/features/tasks/service";
+import { listMilestonesForProject } from "@/features/milestones/service";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EditProjectButton } from "@/features/projects/components/EditProjectButton";
 import { DeleteProjectButton } from "@/features/projects/components/DeleteProjectButton";
-import { TaskBoard } from "@/features/tasks/components/TaskBoard";
+import { TasksPanel } from "@/features/tasks/components/TasksPanel";
+import { MilestonesSection } from "@/features/milestones/components/MilestonesSection";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ProjectDetailPage({
@@ -24,7 +27,10 @@ export default async function ProjectDetailPage({
   const project = await getProject(user.workspaceId, id);
   if (!project) notFound();
 
-  const tasks = await listTasksForProject(user.workspaceId, project.id);
+  const [tasks, milestones] = await Promise.all([
+    listTasksForProject(user.workspaceId, project.id),
+    listMilestonesForProject(user.workspaceId, project.id),
+  ]);
 
   return (
     <>
@@ -86,19 +92,29 @@ export default async function ProjectDetailPage({
           >
             <Field
               label="Start date"
-              value={project.startDate ? new Date(project.startDate).toLocaleDateString() : undefined}
+              value={project.startDate ? formatDate(project.startDate) : undefined}
             />
             <Field
               label="End date"
-              value={project.endDate ? new Date(project.endDate).toLocaleDateString() : undefined}
+              value={project.endDate ? formatDate(project.endDate) : undefined}
             />
           </dl>
         </Card>
 
         <div style={{ marginTop: "var(--space-6)" }}>
+          <MilestonesSection milestones={milestones} projectId={project.id} />
+        </div>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
           <Card>
             <CardHeader title="Tasks" subtitle={`${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`} />
-            <TaskBoard tasks={tasks} projectId={project.id} />
+            <TasksPanel
+              tasks={tasks}
+              milestones={milestones}
+              projectId={project.id}
+              projectStartDate={project.startDate}
+              projectEndDate={project.endDate}
+            />
           </Card>
         </div>
       </div>

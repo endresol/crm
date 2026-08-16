@@ -18,6 +18,7 @@ function toDateInputValue(value?: Date | string | null) {
 
 export function TaskForm({
   action,
+  milestones,
   defaultValues,
   submitLabel,
   onSaved,
@@ -25,10 +26,13 @@ export function TaskForm({
   footerExtra,
 }: {
   action: (prevState: TaskActionState, formData: FormData) => Promise<TaskActionState>;
+  milestones?: { id: string; name: string }[];
   defaultValues?: {
     title?: string;
     description?: string | null;
     status?: string;
+    milestoneId?: string | null;
+    startDate?: Date | string | null;
     dueDate?: Date | string | null;
   };
   submitLabel: string;
@@ -81,13 +85,38 @@ export function TaskForm({
           ))}
         </Select>
 
-        <Input
-          name="dueDate"
-          type="date"
-          label="Due date"
-          optional
-          defaultValue={toDateInputValue(defaultValues?.dueDate)}
-        />
+        {milestones && milestones.length > 0 && (
+          <Select
+            name="milestoneId"
+            label="Milestone"
+            optional
+            defaultValue={defaultValues?.milestoneId ?? ""}
+          >
+            <option value="">No milestone</option>
+            {milestones.map((milestone) => (
+              <option key={milestone.id} value={milestone.id}>
+                {milestone.name}
+              </option>
+            ))}
+          </Select>
+        )}
+
+        <div style={{ display: "flex", gap: "var(--space-4)" }}>
+          <Input
+            name="startDate"
+            type="date"
+            label="Start date"
+            optional
+            defaultValue={toDateInputValue(defaultValues?.startDate)}
+          />
+          <Input
+            name="dueDate"
+            type="date"
+            label="Due date"
+            optional
+            defaultValue={toDateInputValue(defaultValues?.dueDate)}
+          />
+        </div>
       </form>
 
       <div
