@@ -20,12 +20,16 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users       User[]
-  clients     Client[]
-  timeEntries TimeEntry[]
-  projects    Project[]
-  tasks       Task[]
-  milestones  Milestone[]
+  users            User[]
+  clients          Client[]
+  timeEntries      TimeEntry[]
+  projects         Project[]
+  tasks            Task[]
+  milestones       Milestone[]
+  products         Product[]
+  discounts        Discount[]
+  priceBooks       PriceBook[]
+  priceBookEntries PriceBookEntry[]
 
   @@map("workspaces")
 }
@@ -203,4 +207,106 @@ model TimeEntry {
   @@index([projectId])
   @@index([taskId])
   @@map("time_entries")
+}
+
+enum ProductType {
+  PRODUCT
+  SERVICE
+}
+
+enum ProductUnit {
+  EACH
+  HOUR
+  DAY
+  WEEK
+  MONTH
+  PROJECT
+}
+
+/// A product or service the workspace sells — a reusable line item for future
+/// Invoices/Proposals/Deals (see docs/roadmap.md). Pricing intentionally does NOT
+/// live on the Product — see PriceBookEntry, which lets the same Product carry a
+/// different price per PriceBook. Trimmed field set for now — see
+/// docs/feature-audit/06-products.md for the full real-product model.
+model Product {
+  id          String      @id @default(cuid())
+  workspaceId String
+  name        String
+  code        String
+  family      String?
+  type        ProductType @default(PRODUCT)
+  unit        ProductUnit @default(EACH)
+  description String?
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  priceBookEntries PriceBookEntry[]
+
+  @@index([workspaceId])
+  @@map("products")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+/// A reusable discount, applied to line items on future Invoices/Proposals/Deals
+/// (see docs/roadmap.md). `value` is a percentage (0-100) when type is PERCENTAGE,
+/// or a currency amount when type is FIXED_AMOUNT. Stored as Float rather than
+/// Decimal — trimmed for the clone, same simplification as TimeEntry.minutes being
+/// a plain Int — see docs/feature-audit/06-products.md for the full real-product model.
+model Discount {
+  id          String       @id @default(cuid())
+  workspaceId String
+  name        String
+  type        DiscountType @default(PERCENTAGE)
+  value       Float
+  createdAt   DateTime     @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("discounts")
+}
+
+/// A named collection of Product prices (e.g. "Standard", "Wholesale") — see
+/// docs/feature-audit/06-products.md.
+model PriceBook {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entries   PriceBookEntry[]
+
+  @@index([workspaceId])
+  @@map("price_books")
+}
+
+/// Assigns a Product a price within a PriceBook. One entry per (priceBook, product).
+model PriceBookEntry {
+  id          String   @id @default(cuid())
+  workspaceId String
+  priceBookId String
+  productId   String
+  unitPrice   Float
+  currency    String   @default("USD")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  priceBook PriceBook @relation(fields: [priceBookId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([priceBookId, productId])
+  @@index([workspaceId])
+  @@index([priceBookId])
+  @@index([productId])
+  @@map("price_book_entries")
 }

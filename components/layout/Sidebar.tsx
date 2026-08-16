@@ -4,7 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode } from "react";
 import styles from "./Sidebar.module.css";
-import { BriefcaseIcon, ClockIcon, GridIcon, LogOutIcon, PeopleIcon } from "@/components/ui/icons";
+import {
+  BriefcaseIcon,
+  ClockIcon,
+  GridIcon,
+  LogOutIcon,
+  PeopleIcon,
+  TagIcon,
+} from "@/components/ui/icons";
 
 type NavItem = {
   href: string;
@@ -31,6 +38,10 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/projects", label: "Projects", icon: (p) => <BriefcaseIcon {...p} /> },
       { href: "/admin/time-tracking", label: "Time Tracking", icon: (p) => <ClockIcon {...p} /> },
     ],
+  },
+  {
+    label: "Money",
+    items: [{ href: "/admin/products", label: "Products", icon: (p) => <TagIcon {...p} /> }],
   },
 ];
 

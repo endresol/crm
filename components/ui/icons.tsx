@@ -121,6 +121,20 @@ export function BriefcaseIcon(props: IconProps) {
   );
 }
 
+export function TagIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        d="M10.5 3.5h4a2 2 0 012 2v4a2 2 0 01-.59 1.41l-6 6a2 2 0 01-2.82 0l-4-4a2 2 0 010-2.82l6-6A2 2 0 0110.5 3.5z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="13.25" cy="6.75" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

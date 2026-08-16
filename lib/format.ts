@@ -17,3 +17,7 @@ export function formatDate(value: Date | string | null | undefined): string {
 export function formatMonthShort(value: Date): string {
   return value.toLocaleDateString(LOCALE, { month: "short" });
 }
+
+export function formatCurrency(value: number, currency: string = "USD"): string {
+  return new Intl.NumberFormat(LOCALE, { style: "currency", currency }).format(value);
+}
