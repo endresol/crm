@@ -6,6 +6,10 @@ import { getProject } from "@/features/projects/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
 import { listTasksForProject } from "@/features/tasks/service";
 import { listMilestonesForProject } from "@/features/milestones/service";
+import {
+  listTimeEntriesForProject,
+  listClientsForLogging,
+} from "@/features/time-entries/service";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -13,6 +17,8 @@ import { EditProjectButton } from "@/features/projects/components/EditProjectBut
 import { DeleteProjectButton } from "@/features/projects/components/DeleteProjectButton";
 import { TasksPanel } from "@/features/tasks/components/TasksPanel";
 import { MilestonesSection } from "@/features/milestones/components/MilestonesSection";
+import { LogTimeButton } from "@/features/time-entries/components/LogTimeButton";
+import { TimeEntriesList } from "@/features/time-entries/components/TimeEntriesList";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ProjectDetailPage({
@@ -27,9 +33,11 @@ export default async function ProjectDetailPage({
   const project = await getProject(user.workspaceId, id);
   if (!project) notFound();
 
-  const [tasks, milestones] = await Promise.all([
+  const [tasks, milestones, timeEntries, clientsForLogging] = await Promise.all([
     listTasksForProject(user.workspaceId, project.id),
     listMilestonesForProject(user.workspaceId, project.id),
+    listTimeEntriesForProject(user.workspaceId, project.id),
+    listClientsForLogging(user.workspaceId),
   ]);
 
   return (
@@ -39,6 +47,11 @@ export default async function ProjectDetailPage({
         subtitle="Project details"
         actions={
           <>
+            <LogTimeButton
+              clients={clientsForLogging}
+              fixedClientId={project.clientId}
+              fixedProjectId={project.id}
+            />
             <EditProjectButton project={project} />
             <DeleteProjectButton projectId={project.id} clientId={project.clientId} />
           </>
@@ -116,6 +129,10 @@ export default async function ProjectDetailPage({
               projectEndDate={project.endDate}
             />
           </Card>
+        </div>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <TimeEntriesList entries={timeEntries} hideProject />
         </div>
       </div>
     </>

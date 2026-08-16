@@ -23,8 +23,44 @@ export async function listTimeEntriesByClient(workspaceId: string) {
 export function listTimeEntriesForClient(workspaceId: string, clientId: string) {
   return prisma.timeEntry.findMany({
     where: { workspaceId, clientId },
-    include: { user: { select: { name: true } } },
+    include: {
+      user: { select: { name: true } },
+      project: { select: { id: true, name: true } },
+      task: { select: { id: true, title: true } },
+    },
     orderBy: { date: "desc" },
+  });
+}
+
+export function listTimeEntriesForProject(workspaceId: string, projectId: string) {
+  return prisma.timeEntry.findMany({
+    where: { workspaceId, projectId },
+    include: {
+      user: { select: { name: true } },
+      task: { select: { id: true, title: true } },
+    },
+    orderBy: { date: "desc" },
+  });
+}
+
+/// Clients with their Projects and each Project's Tasks (id/name only) — feeds the
+/// cascading Client → Project → Task selects on the "Log time" form.
+export function listClientsForLogging(workspaceId: string) {
+  return prisma.client.findMany({
+    where: { workspaceId },
+    select: {
+      id: true,
+      name: true,
+      projects: {
+        select: {
+          id: true,
+          name: true,
+          tasks: { select: { id: true, title: true }, orderBy: { createdAt: "asc" } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+    orderBy: { name: "asc" },
   });
 }
 
@@ -34,6 +70,8 @@ export function createTimeEntry(workspaceId: string, userId: string, input: Time
       workspaceId,
       userId,
       clientId: input.clientId,
+      projectId: input.projectId ?? null,
+      taskId: input.taskId ?? null,
       minutes: input.hours * 60 + input.minutes,
       description: input.description,
       date: new Date(input.date),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -9,6 +9,16 @@ import { logTimeAction, type TimeEntryActionState } from "../actions";
 
 const initialState: TimeEntryActionState = {};
 
+export type ClientForLogging = {
+  id: string;
+  name: string;
+  projects: {
+    id: string;
+    name: string;
+    tasks: { id: string; title: string }[];
+  }[];
+};
+
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -16,20 +26,29 @@ function todayISO() {
 export function LogTimeForm({
   clients,
   fixedClientId,
+  fixedProjectId,
   onSaved,
   onCancel,
 }: {
-  clients?: { id: string; name: string }[];
+  clients: ClientForLogging[];
   fixedClientId?: string;
+  fixedProjectId?: string;
   onSaved: () => void;
   onCancel?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(logTimeAction, initialState);
+  const [clientId, setClientId] = useState(fixedClientId ?? "");
+  const [projectId, setProjectId] = useState(fixedProjectId ?? "");
 
   useEffect(() => {
     if (state.success) onSaved();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.success]);
+
+  const selectedClient = clients.find((client) => client.id === clientId);
+  const projects = selectedClient?.projects ?? [];
+  const selectedProject = projects.find((project) => project.id === projectId);
+  const tasks = selectedProject?.tasks ?? [];
 
   return (
     <form action={formAction} style={{ display: "contents" }}>
@@ -47,8 +66,19 @@ export function LogTimeForm({
         </div>
       )}
 
-      {clients ? (
-        <Select name="clientId" label="Client" defaultValue="" required>
+      {fixedClientId ? (
+        <input type="hidden" name="clientId" value={fixedClientId} />
+      ) : (
+        <Select
+          name="clientId"
+          label="Client"
+          defaultValue=""
+          required
+          onChange={(event) => {
+            setClientId(event.target.value);
+            setProjectId("");
+          }}
+        >
           <option value="">Select a client</option>
           {clients.map((client) => (
             <option key={client.id} value={client.id}>
@@ -56,9 +86,37 @@ export function LogTimeForm({
             </option>
           ))}
         </Select>
-      ) : (
-        <input type="hidden" name="clientId" value={fixedClientId} />
       )}
+
+      {fixedProjectId ? (
+        <input type="hidden" name="projectId" value={fixedProjectId} />
+      ) : (
+        <Select
+          key={clientId}
+          name="projectId"
+          label="Project"
+          optional
+          defaultValue=""
+          disabled={!clientId}
+          onChange={(event) => setProjectId(event.target.value)}
+        >
+          <option value="">{clientId ? "No project" : "Select a client first…"}</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </Select>
+      )}
+
+      <Select key={projectId} name="taskId" label="Task" optional defaultValue="" disabled={!projectId}>
+        <option value="">{projectId ? "No task" : "Select a project first…"}</option>
+        {tasks.map((task) => (
+          <option key={task.id} value={task.id}>
+            {task.title}
+          </option>
+        ))}
+      </Select>
 
       <Input name="date" type="date" label="Date" defaultValue={todayISO()} required />
 

@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getClient } from "@/features/clients/service";
-import { listTimeEntriesForClient } from "@/features/time-entries/service";
+import { listTimeEntriesForClient, listClientsForLogging } from "@/features/time-entries/service";
 import { listProjectsForClient } from "@/features/projects/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
 import { Topbar } from "@/components/layout/Topbar";
@@ -28,9 +28,10 @@ export default async function ClientDetailPage({
   const client = await getClient(user.workspaceId, id);
   if (!client) notFound();
 
-  const [timeEntries, projects] = await Promise.all([
+  const [timeEntries, projects, clientsForLogging] = await Promise.all([
     listTimeEntriesForClient(user.workspaceId, client.id),
     listProjectsForClient(user.workspaceId, client.id),
+    listClientsForLogging(user.workspaceId),
   ]);
 
   return (
@@ -40,7 +41,7 @@ export default async function ClientDetailPage({
         subtitle="Client details"
         actions={
           <>
-            <LogTimeButton fixedClientId={client.id} />
+            <LogTimeButton clients={clientsForLogging} fixedClientId={client.id} />
             <EditClientButton client={client} />
             <DeleteClientButton clientId={client.id} />
           </>
@@ -128,7 +129,7 @@ export default async function ClientDetailPage({
         </div>
 
         <div style={{ marginTop: "var(--space-6)" }}>
-          <TimeEntriesList entries={timeEntries} clientId={client.id} />
+          <TimeEntriesList entries={timeEntries} />
         </div>
       </div>
     </>

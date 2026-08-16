@@ -6,14 +6,22 @@ import { DeleteTimeEntryButton } from "./DeleteTimeEntryButton";
 import { formatMinutes } from "../service";
 import type { TimeEntry } from "@/generated/prisma/client";
 
+type EntryWithContext = TimeEntry & {
+  user: { name: string };
+  project?: { id: string; name: string } | null;
+  task?: { id: string; title: string } | null;
+};
+
 export function TimeEntriesList({
   entries,
-  clientId,
+  hideProject = false,
 }: {
-  entries: (TimeEntry & { user: { name: string } })[];
-  clientId: string;
+  entries: EntryWithContext[];
+  /** Omit the Project column when every entry is already scoped to one project (e.g. on a Project's own page). */
+  hideProject?: boolean;
 }) {
   const totalMinutes = entries.reduce((sum, entry) => sum + entry.minutes, 0);
+  const columnCount = hideProject ? 7 : 8;
 
   return (
     <Card>
@@ -31,6 +39,8 @@ export function TimeEntriesList({
           <tr>
             <th>Date</th>
             <th>Description</th>
+            {!hideProject && <th>Project</th>}
+            <th>Task</th>
             <th>Logged by</th>
             <th>Duration</th>
             <th></th>
@@ -39,12 +49,14 @@ export function TimeEntriesList({
         </thead>
         <tbody>
           {entries.length === 0 ? (
-            <TableEmptyState colSpan={6} title="No time logged yet" />
+            <TableEmptyState colSpan={columnCount} title="No time logged yet" />
           ) : (
             entries.map((entry) => (
               <TableRow key={entry.id}>
                 <td>{formatDate(entry.date)}</td>
                 <td>{entry.description || "—"}</td>
+                {!hideProject && <td>{entry.project?.name ?? "—"}</td>}
+                <td>{entry.task?.title ?? "—"}</td>
                 <td>{entry.user.name}</td>
                 <td>{formatMinutes(entry.minutes)}</td>
                 <td>
@@ -55,7 +67,11 @@ export function TimeEntriesList({
                   )}
                 </td>
                 <td>
-                  <DeleteTimeEntryButton entryId={entry.id} clientId={clientId} />
+                  <DeleteTimeEntryButton
+                    entryId={entry.id}
+                    clientId={entry.clientId}
+                    projectId={entry.projectId ?? undefined}
+                  />
                 </td>
               </TableRow>
             ))

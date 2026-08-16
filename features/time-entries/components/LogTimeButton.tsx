@@ -4,15 +4,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { PlusIcon } from "@/components/ui/icons";
-import { LogTimeForm } from "./LogTimeForm";
+import { LogTimeForm, type ClientForLogging } from "./LogTimeForm";
 
 export function LogTimeButton({
   clients,
   fixedClientId,
+  fixedProjectId,
   label = "Log time",
 }: {
-  clients?: { id: string; name: string }[];
+  clients: ClientForLogging[];
   fixedClientId?: string;
+  fixedProjectId?: string;
   label?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -27,6 +29,7 @@ export function LogTimeButton({
         <LogTimeForm
           clients={clients}
           fixedClientId={fixedClientId}
+          fixedProjectId={fixedProjectId}
           onSaved={() => setOpen(false)}
           onCancel={() => setOpen(false)}
         />

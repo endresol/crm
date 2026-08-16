@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { listTimeEntriesByClient, formatMinutes } from "@/features/time-entries/service";
-import { listClients } from "@/features/clients/service";
+import {
+  listTimeEntriesByClient,
+  listClientsForLogging,
+  formatMinutes,
+} from "@/features/time-entries/service";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -15,7 +18,7 @@ export default async function TimeTrackingPage() {
 
   const [grouped, clients] = await Promise.all([
     listTimeEntriesByClient(user.workspaceId),
-    listClients(user.workspaceId),
+    listClientsForLogging(user.workspaceId),
   ]);
 
   return (

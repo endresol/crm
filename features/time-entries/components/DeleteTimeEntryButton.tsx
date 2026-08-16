@@ -17,11 +17,13 @@ function SubmitIconButton() {
 export function DeleteTimeEntryButton({
   entryId,
   clientId,
+  projectId,
 }: {
   entryId: string;
   clientId: string;
+  projectId?: string;
 }) {
-  const boundAction = deleteTimeEntryAction.bind(null, entryId, clientId);
+  const boundAction = deleteTimeEntryAction.bind(null, entryId, clientId, projectId);
   return (
     <form action={boundAction}>
       <SubmitIconButton />
