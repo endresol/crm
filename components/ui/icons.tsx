@@ -107,6 +107,20 @@ export function SearchIcon(props: IconProps) {
   );
 }
 
+export function BriefcaseIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="6.5" width="14" height="9.5" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M7 6.5V5a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0113 5v1.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path d="M3 10.5h14" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

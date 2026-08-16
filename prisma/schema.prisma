@@ -23,6 +23,7 @@ model Workspace {
   users       User[]
   clients     Client[]
   timeEntries TimeEntry[]
+  projects    Project[]
 
   @@map("workspaces")
 }
@@ -78,9 +79,39 @@ model Client {
 
   workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   timeEntries TimeEntry[]
+  projects    Project[]
 
   @@index([workspaceId])
   @@map("clients")
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+/// A project of work delivered for a Client. Trimmed field set for now —
+/// see docs/feature-audit/07-projects-tasks.md for the full real-product model.
+model Project {
+  id          String        @id @default(cuid())
+  workspaceId String
+  clientId    String
+  name        String
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  startDate   DateTime?     @db.Date
+  endDate     DateTime?     @db.Date
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@map("projects")
 }
 
 /// A logged block of time worked for a Client. Trimmed field set for now —

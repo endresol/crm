@@ -3,13 +3,17 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getClient } from "@/features/clients/service";
 import { listTimeEntriesForClient } from "@/features/time-entries/service";
+import { listProjectsForClient } from "@/features/projects/service";
+import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
 import { Topbar } from "@/components/layout/Topbar";
-import { Card } from "@/components/ui/Card";
+import { Card, CardHeader } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
 import { EditClientButton } from "@/features/clients/components/EditClientButton";
 import { DeleteClientButton } from "@/features/clients/components/DeleteClientButton";
 import { LogTimeButton } from "@/features/time-entries/components/LogTimeButton";
 import { TimeEntriesList } from "@/features/time-entries/components/TimeEntriesList";
+import { AddProjectButton } from "@/features/projects/components/AddProjectButton";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ClientDetailPage({
@@ -24,7 +28,10 @@ export default async function ClientDetailPage({
   const client = await getClient(user.workspaceId, id);
   if (!client) notFound();
 
-  const timeEntries = await listTimeEntriesForClient(user.workspaceId, client.id);
+  const [timeEntries, projects] = await Promise.all([
+    listTimeEntriesForClient(user.workspaceId, client.id),
+    listProjectsForClient(user.workspaceId, client.id),
+  ]);
 
   return (
     <>
@@ -81,6 +88,44 @@ export default async function ClientDetailPage({
             <Field label="Industry" value={client.industry} />
           </dl>
         </Card>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <Card>
+            <CardHeader
+              title="Projects"
+              subtitle={`${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
+              action={<AddProjectButton fixedClientId={client.id} label="New project" />}
+            />
+            {projects.length === 0 ? (
+              <p style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                No projects yet for this client.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                {projects.map((project) => (
+                  <Link
+                    key={project.id}
+                    href={`/admin/projects/${project.id}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "var(--space-3) var(--space-4)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>{project.name}</span>
+                    <Badge variant={PROJECT_STATUS_BADGE_VARIANT[project.status]}>
+                      {PROJECT_STATUS_LABELS[project.status]}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
 
         <div style={{ marginTop: "var(--space-6)" }}>
           <TimeEntriesList entries={timeEntries} clientId={client.id} />

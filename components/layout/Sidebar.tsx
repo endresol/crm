@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode } from "react";
 import styles from "./Sidebar.module.css";
-import { ClockIcon, GridIcon, LogOutIcon, PeopleIcon } from "@/components/ui/icons";
+import { BriefcaseIcon, ClockIcon, GridIcon, LogOutIcon, PeopleIcon } from "@/components/ui/icons";
 
 type NavItem = {
   href: string;
@@ -12,10 +12,26 @@ type NavItem = {
   icon: (props: { className?: string }) => ReactNode;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> },
-  { href: "/admin/clients", label: "Clients", icon: (p) => <PeopleIcon {...p} /> },
-  { href: "/admin/time-tracking", label: "Time Tracking", icon: (p) => <ClockIcon {...p} /> },
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Workspace",
+    items: [
+      { href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> },
+      { href: "/admin/clients", label: "Clients", icon: (p) => <PeopleIcon {...p} /> },
+    ],
+  },
+  {
+    label: "Delivery",
+    items: [
+      { href: "/admin/projects", label: "Projects", icon: (p) => <BriefcaseIcon {...p} /> },
+      { href: "/admin/time-tracking", label: "Time Tracking", icon: (p) => <ClockIcon {...p} /> },
+    ],
+  },
 ];
 
 export function Sidebar({
@@ -36,22 +52,26 @@ export function Sidebar({
         <span className={styles.logoText}>{workspaceName}</span>
       </div>
 
-      <div className={styles.groupLabel}>Workspace</div>
-      <nav className={styles.nav}>
-        {NAV_ITEMS.map((item) => {
-          const active = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={[styles.navItem, active ? styles.navItemActive : ""].join(" ")}
-            >
-              <span className={styles.navIcon}>{item.icon({})}</span>
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label}>
+          <div className={styles.groupLabel}>{group.label}</div>
+          <nav className={styles.nav}>
+            {group.items.map((item) => {
+              const active = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={[styles.navItem, active ? styles.navItemActive : ""].join(" ")}
+                >
+                  <span className={styles.navIcon}>{item.icon({})}</span>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      ))}
 
       <div className={styles.spacer} />
 
