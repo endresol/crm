@@ -53,6 +53,7 @@ model Workspace {
   invoiceLineItems  InvoiceLineItem[]
   proposals         Proposal[]
   proposalLineItems ProposalLineItem[]
+  contracts         Contract[]
 
   @@map("workspaces")
 }
@@ -122,6 +123,7 @@ model Client {
   convertedLeads Lead[]
   invoices       Invoice[]
   proposals      Proposal[]
+  contracts      Contract[]
 
   @@index([workspaceId])
   @@map("clients")
@@ -146,6 +148,7 @@ model Contact {
   deals     Deal[]
   invoices  Invoice[]
   proposals Proposal[]
+  contracts Contract[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -192,9 +195,10 @@ model Deal {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact   Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contracts Contract[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -541,6 +545,7 @@ model DocumentTemplate {
   workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   invoices  Invoice[]
   proposals Proposal[]
+  contracts Contract[]
 
   @@index([workspaceId])
   @@index([type])
@@ -683,4 +688,52 @@ model ProposalLineItem {
   @@index([proposalId])
   @@index([productId])
   @@map("proposal_line_items")
+}
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  EXPIRED
+}
+
+/// A client-facing legal document (roadmap #17) — clause-text-shaped like Sop,
+/// a single editable `content` body built from a template, not a line-item
+/// table (see the design note at the top of docs/roadmap.md). No contract
+/// number (display uses `name`, same trimming as Invoice/Proposal), no
+/// e-signature capture (status is self-reported), `contractType` is a
+/// free-form string (same "free-form category" pattern as Product.family)
+/// since no fixed enum was observed, and no createdBy tracking (no other
+/// model in this schema tracks a creator either). See
+/// docs/feature-audit/09-contracts.md for the full real-product model.
+model Contract {
+  id            String         @id @default(cuid())
+  workspaceId   String
+  clientId      String
+  contactId     String?
+  dealId        String?
+  templateId    String?
+  name          String
+  status        ContractStatus @default(DRAFT)
+  contractType  String?
+  contractValue Float?
+  currency      String         @default("USD")
+  startDate     DateTime?      @db.Date
+  endDate       DateTime?      @db.Date
+  content       String         @default("")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact   Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal      Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  template  DocumentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@index([contactId])
+  @@index([dealId])
+  @@index([templateId])
+  @@map("contracts")
 }
