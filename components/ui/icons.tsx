@@ -146,6 +146,27 @@ export function SettingsIcon(props: IconProps) {
   );
 }
 
+export function TeamIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="7" cy="6.5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M2.5 16c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <circle cx="14" cy="7.5" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M12.5 16c0-2 1.4-3.5 3.5-3.5s3.5 1.5 3.5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

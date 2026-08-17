@@ -52,8 +52,15 @@ model Workspace {
   @@map("workspaces")
 }
 
+/// Trimmed to two roles (roadmap #5) — the audit only confirmed "Master Admin"
+/// exists and guessed "Member/Viewer" as Team-plan additions without
+/// enumerating them, so MEMBER is the one addition, and there's no permission
+/// system gating what a MEMBER can do yet (role is stored/displayed only, same
+/// as the real product's read-only Role field on the Account settings page).
+/// See docs/feature-audit/15-settings.md.
 enum UserRole {
   MASTER_ADMIN
+  MEMBER
 }
 
 /// An admin-app principal (as opposed to a future Client Portal Contact principal).
