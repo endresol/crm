@@ -119,6 +119,19 @@ export function DocumentIcon(props: IconProps) {
   );
 }
 
+export function CalendarIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="4.5" width="14" height="12.5" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 8.5h14" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 2.5v3M13.5 2.5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="7" cy="11.75" r="1" fill="currentColor" />
+      <circle cx="10" cy="11.75" r="1" fill="currentColor" />
+      <circle cx="7" cy="14.5" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

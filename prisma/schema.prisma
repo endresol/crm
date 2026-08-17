@@ -26,6 +26,7 @@ model Workspace {
   deals            Deal[]
   leads            Lead[]
   sops             Sop[]
+  calendarEvents   CalendarEvent[]
   timeEntries      TimeEntry[]
   projects         Project[]
   tasks            Task[]
@@ -53,9 +54,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  sessions    Session[]
-  timeEntries TimeEntry[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sessions       Session[]
+  timeEntries    TimeEntry[]
+  calendarEvents CalendarEvent[]
 
   @@index([workspaceId])
   @@map("users")
@@ -428,6 +430,30 @@ model PriceBookEntry {
   @@index([priceBookId])
   @@index([productId])
   @@map("price_book_entries")
+}
+
+/// A lightweight personal calendar event (roadmap #4's "Calendar" tab only —
+/// the real product's "Meetings"/booking-page half of this nav item is
+/// roadmap #19, Meeting Scheduler, built separately on top of this).
+/// Trimmed field set for now — no attendees/location/description, no Google
+/// Calendar sync. See docs/feature-audit/04-calendar.md for the full
+/// real-product model.
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  title       String
+  startAt     DateTime
+  endAt       DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("calendar_events")
 }
 
 /// An internal knowledge-base document (roadmap #3) — not associated with any

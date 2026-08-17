@@ -6,6 +6,7 @@ import { type ReactNode } from "react";
 import styles from "./Sidebar.module.css";
 import {
   BriefcaseIcon,
+  CalendarIcon,
   ClockIcon,
   ContactIcon,
   DealIcon,
@@ -48,6 +49,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/projects", label: "Projects", icon: (p) => <BriefcaseIcon {...p} /> },
       { href: "/admin/time-tracking", label: "Time Tracking", icon: (p) => <ClockIcon {...p} /> },
       { href: "/admin/sops", label: "SOPs", icon: (p) => <DocumentIcon {...p} /> },
+      { href: "/admin/calendar", label: "Calendar", icon: (p) => <CalendarIcon {...p} /> },
     ],
   },
   {
