@@ -25,6 +25,7 @@ model Workspace {
   contacts         Contact[]
   deals            Deal[]
   leads            Lead[]
+  sops             Sop[]
   timeEntries      TimeEntry[]
   projects         Project[]
   tasks            Task[]
@@ -427,4 +428,24 @@ model PriceBookEntry {
   @@index([priceBookId])
   @@index([productId])
   @@map("price_book_entries")
+}
+
+/// An internal knowledge-base document (roadmap #3) — not associated with any
+/// Client/Project. "Create SOP" auto-creates a draft and opens it, same as the
+/// real product's Google-Docs-style flow. Trimmed field set for now — content
+/// is plain text rather than the real product's rich-text/WYSIWYG editor (no
+/// editor library in this repo yet), and there's no upload/share/read-only-view
+/// distinction. See docs/feature-audit/12-sops.md for the full real-product model.
+model Sop {
+  id          String   @id @default(cuid())
+  workspaceId String
+  title       String   @default("Untitled SOP")
+  content     String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("sops")
 }

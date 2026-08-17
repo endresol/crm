@@ -1,15 +1,14 @@
 # Feature backlog (Phase 4+)
 
 Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client), **Contacts** (#1),
-**Products & Pricing** (#2), **Deals** (#7), **Leads** (#8), **Projects** (#9), **Tasks** (#10),
-**Milestones** (#11), **Gantt chart view** (#12),
+**Products & Pricing** (#2), **SOPs** (#3), **Deals** (#7), **Leads** (#8), **Projects** (#9),
+**Tasks** (#10), **Milestones** (#11), **Gantt chart view** (#12),
 **Upgrade Time Tracking to log against Project/Task** (#13).
 
 Everything below this line is *not yet built*.
 
 Pick items in whatever order you like — just respect the "Requires" line. Items with no "Requires" line have no dependency on anything in this list and can be built anytime.
 
-3. **SOPs** — internal rich-text documents (standalone knowledge base).
 4. **Calendar** — basic events (add/view, month view).
 5. **Team members & roles** — invite more users into a workspace, roles beyond Master Admin.
 6. **Workspace settings** — name, branding colors, timezone/currency/date format.
