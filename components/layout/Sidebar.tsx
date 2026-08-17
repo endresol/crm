@@ -12,12 +12,14 @@ import {
   DealIcon,
   DocumentIcon,
   GridIcon,
+  InvoiceIcon,
   LeadIcon,
   LogOutIcon,
   PeopleIcon,
   SettingsIcon,
   TagIcon,
   TeamIcon,
+  TemplateIcon,
 } from "@/components/ui/icons";
 
 type NavItem = {
@@ -60,7 +62,11 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Money",
-    items: [{ href: "/admin/products", label: "Products", icon: (p) => <TagIcon {...p} /> }],
+    items: [
+      { href: "/admin/products", label: "Products", icon: (p) => <TagIcon {...p} /> },
+      { href: "/admin/invoices", label: "Invoices", icon: (p) => <InvoiceIcon {...p} /> },
+      { href: "/admin/templates", label: "Templates", icon: (p) => <TemplateIcon {...p} /> },
+    ],
   },
 ];
 

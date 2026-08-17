@@ -4,15 +4,21 @@ Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client),
 **Products & Pricing** (#2), **SOPs** (#3), **Calendar** (#4), **Team members & roles** (#5),
 **Workspace settings** (#6), **Deals** (#7), **Leads** (#8), **Projects** (#9), **Tasks** (#10),
 **Milestones** (#11), **Gantt chart view** (#12),
-**Upgrade Time Tracking to log against Project/Task** (#13).
+**Upgrade Time Tracking to log against Project/Task** (#13), **Document Templates system** (#14),
+**Invoices** (#15).
+
+`DocumentTemplate` is a single shared model (type: PROPOSAL/CONTRACT/INVOICE/QUESTIONNAIRE) with
+`{{merge.field}}` tokens (features/document-templates/mergeFields.ts) resolved against a Client/
+Workspace when a document is generated — but each document type (Invoice built; Proposal/
+Contract/Questionnaire not yet) still gets its own content model (line items vs. clause text vs.
+Q&A), not one shared polymorphic table — their content shapes differ too much for that to be a
+good idea. See the merge-field template system and content models discussion in chat around
+2026-08-17 if picking this back up.
 
 Everything below this line is *not yet built*.
 
 Pick items in whatever order you like — just respect the "Requires" line. Items with no "Requires" line have no dependency on anything in this list and can be built anytime.
 
-14. **Document Templates system** — shared template/builder infrastructure used by Invoices, Proposals, Contracts, and Questionnaires. Build this before #16–18.
-15. **Invoices** — billing documents with line items.
-    Requires: **Products & Pricing** (#2). Templates (#14) optional, not required.
 16. **Proposals** — sales documents with line items, sent to clients.
     Requires: **Document Templates** (#14), **Products & Pricing** (#2)
 17. **Contracts** — legal documents built from templates.

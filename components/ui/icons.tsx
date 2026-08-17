@@ -167,6 +167,31 @@ export function TeamIcon(props: IconProps) {
   );
 }
 
+export function TemplateIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="3" width="14" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 8h14" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7.5 8v9" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function InvoiceIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        d="M5.5 2.5h6L15 5.5V16a1.5 1.5 0 01-1.5 1.5h-6A1.5 1.5 0 016 16V4a1.5 1.5 0 01-.5-1.5z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M11.5 2.5V5.5H15" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M8 9.5h4M8 12h4M8 14.5h2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

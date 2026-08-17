@@ -6,8 +6,15 @@ import { listTimeEntriesForClient, listClientsForLogging } from "@/features/time
 import { listProjectsForClient } from "@/features/projects/service";
 import { listContactsForClient } from "@/features/contacts/service";
 import { listDealsForClient } from "@/features/deals/service";
+import { listInvoicesForClient } from "@/features/invoices/service";
+import { listTemplatesByType } from "@/features/document-templates/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
 import { DEAL_STAGE_BADGE_VARIANT, DEAL_STAGE_LABELS } from "@/features/deals/constants";
+import {
+  INVOICE_STATUS_BADGE_VARIANT,
+  INVOICE_STATUS_LABELS,
+  invoiceTotal,
+} from "@/features/invoices/constants";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -19,6 +26,7 @@ import { TimeEntriesList } from "@/features/time-entries/components/TimeEntriesL
 import { AddProjectButton } from "@/features/projects/components/AddProjectButton";
 import { AddContactButton } from "@/features/contacts/components/AddContactButton";
 import { AddDealButton } from "@/features/deals/components/AddDealButton";
+import { AddInvoiceButton } from "@/features/invoices/components/AddInvoiceButton";
 import { formatCurrency } from "@/lib/format";
 import styles from "@/components/layout/AdminShell.module.css";
 
@@ -34,13 +42,16 @@ export default async function ClientDetailPage({
   const client = await getClient(user.workspaceId, id);
   if (!client) notFound();
 
-  const [timeEntries, projects, contacts, deals, clientsForLogging] = await Promise.all([
-    listTimeEntriesForClient(user.workspaceId, client.id),
-    listProjectsForClient(user.workspaceId, client.id),
-    listContactsForClient(user.workspaceId, client.id),
-    listDealsForClient(user.workspaceId, client.id),
-    listClientsForLogging(user.workspaceId),
-  ]);
+  const [timeEntries, projects, contacts, deals, invoices, invoiceTemplates, clientsForLogging] =
+    await Promise.all([
+      listTimeEntriesForClient(user.workspaceId, client.id),
+      listProjectsForClient(user.workspaceId, client.id),
+      listContactsForClient(user.workspaceId, client.id),
+      listDealsForClient(user.workspaceId, client.id),
+      listInvoicesForClient(user.workspaceId, client.id),
+      listTemplatesByType(user.workspaceId, "INVOICE"),
+      listClientsForLogging(user.workspaceId),
+    ]);
 
   return (
     <>
@@ -222,6 +233,61 @@ export default async function ClientDetailPage({
                       {DEAL_STAGE_LABELS[deal.stage]}
                     </Badge>
                   </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <Card>
+            <CardHeader
+              title="Invoices"
+              subtitle={`${invoices.length} ${invoices.length === 1 ? "invoice" : "invoices"}`}
+              action={
+                <AddInvoiceButton
+                  fixedClientId={client.id}
+                  contacts={contacts.map((contact) => ({
+                    id: contact.id,
+                    fullName: contact.fullName,
+                    clientId: contact.clientId,
+                  }))}
+                  templates={invoiceTemplates}
+                  workspaceName={user.workspaceName}
+                  label="New invoice"
+                />
+              }
+            />
+            {invoices.length === 0 ? (
+              <p style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                No invoices yet for this client.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                {invoices.map((invoice) => (
+                  <Link
+                    key={invoice.id}
+                    href={`/admin/invoices/${invoice.id}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "var(--space-3) var(--space-4)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{invoice.name}</div>
+                      <div style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                        {formatCurrency(invoiceTotal(invoice.lineItems), invoice.currency)}
+                      </div>
+                    </div>
+                    <Badge variant={INVOICE_STATUS_BADGE_VARIANT[invoice.status]}>
+                      {INVOICE_STATUS_LABELS[invoice.status]}
+                    </Badge>
+                  </Link>
                 ))}
               </div>
             )}

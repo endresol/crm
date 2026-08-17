@@ -33,21 +33,24 @@ model Workspace {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  users            User[]
-  clients          Client[]
-  contacts         Contact[]
-  deals            Deal[]
-  leads            Lead[]
-  sops             Sop[]
-  calendarEvents   CalendarEvent[]
-  timeEntries      TimeEntry[]
-  projects         Project[]
-  tasks            Task[]
-  milestones       Milestone[]
-  products         Product[]
-  discounts        Discount[]
-  priceBooks       PriceBook[]
-  priceBookEntries PriceBookEntry[]
+  users             User[]
+  clients           Client[]
+  contacts          Contact[]
+  deals             Deal[]
+  leads             Lead[]
+  sops              Sop[]
+  calendarEvents    CalendarEvent[]
+  timeEntries       TimeEntry[]
+  projects          Project[]
+  tasks             Task[]
+  milestones        Milestone[]
+  products          Product[]
+  discounts         Discount[]
+  priceBooks        PriceBook[]
+  priceBookEntries  PriceBookEntry[]
+  documentTemplates DocumentTemplate[]
+  invoices          Invoice[]
+  invoiceLineItems  InvoiceLineItem[]
 
   @@map("workspaces")
 }
@@ -115,6 +118,7 @@ model Client {
   contacts       Contact[]
   deals          Deal[]
   convertedLeads Lead[]
+  invoices       Invoice[]
 
   @@index([workspaceId])
   @@map("clients")
@@ -137,6 +141,7 @@ model Contact {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   deals     Deal[]
+  invoices  Invoice[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -382,8 +387,9 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   priceBookEntries PriceBookEntry[]
+  invoiceLineItems InvoiceLineItem[]
 
   @@index([workspaceId])
   @@map("products")
@@ -494,4 +500,117 @@ model Sop {
 
   @@index([workspaceId])
   @@map("sops")
+}
+
+/// Which document type a DocumentTemplate/document is. Proposal/Contract/
+/// Questionnaire aren't built yet (roadmap #16-#18) — the enum includes them
+/// now so the template library (#14) is ready for them without another migration.
+enum DocumentTemplateType {
+  PROPOSAL
+  CONTRACT
+  INVOICE
+  QUESTIONNAIRE
+}
+
+/// Shared template library (roadmap #14) used by Invoices/Proposals/Contracts/
+/// Questionnaires — the "build once, reuse across all four types" piece the
+/// four document types were explicitly *not* otherwise unified on (their
+/// content shapes differ too much: line items vs. clause text vs. Q&A — see
+/// docs/roadmap.md discussion). `content` carries {{merge.field}} tokens (see
+/// features/document-templates/mergeFields.ts) resolved against a Client/
+/// Project/Workspace when a document is generated from this template.
+/// Trimmed field set — no "Build From Scratch" vs. "Use Default Template"
+/// distinction, no clause-level builder. See docs/feature-audit/09-contracts.md
+/// and 10-proposals.md for the full real-product model.
+model DocumentTemplate {
+  id          String               @id @default(cuid())
+  workspaceId String
+  type        DocumentTemplateType
+  name        String
+  category    String?
+  description String?
+  content     String               @default("")
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invoices  Invoice[]
+
+  @@index([workspaceId])
+  @@index([type])
+  @@map("document_templates")
+}
+
+enum InvoiceBillingType {
+  ONE_TIME
+  RECURRING
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+/// A client billing document (roadmap #15). Line items are a real child table
+/// (added on the invoice after creation, per the audit — not template
+/// content); `template`/`notes` is the merge-filled boilerplate text, optional
+/// per the audit ("template is optional here, not required"). No Invoice
+/// Type (Client/Project/Deal) selector, no recurring-billing configuration,
+/// no payment integration — see docs/feature-audit/11-invoices.md for the
+/// full real-product model.
+model Invoice {
+  id          String             @id @default(cuid())
+  workspaceId String
+  clientId    String
+  contactId   String?
+  templateId  String?
+  name        String
+  billingType InvoiceBillingType @default(ONE_TIME)
+  status      InvoiceStatus      @default(DRAFT)
+  invoiceDate DateTime           @db.Date
+  dueDate     DateTime?          @db.Date
+  currency    String             @default("USD")
+  notes       String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact   Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  template  DocumentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  lineItems InvoiceLineItem[]
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@index([contactId])
+  @@index([templateId])
+  @@map("invoices")
+}
+
+/// A line on an Invoice. description/unitPrice are copied from the Product/
+/// PriceBookEntry at add-time (not live references) — standard invoicing
+/// practice: a later price change shouldn't retroactively change an already-
+/// issued invoice.
+model InvoiceLineItem {
+  id          String   @id @default(cuid())
+  workspaceId String
+  invoiceId   String
+  productId   String?
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invoice   Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product   Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([invoiceId])
+  @@index([productId])
+  @@map("invoice_line_items")
 }
