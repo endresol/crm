@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "workspaces" ADD COLUMN     "accentColor" TEXT NOT NULL DEFAULT '#732AFF',
+ADD COLUMN     "backgroundColor" TEXT NOT NULL DEFAULT '#F5F3FF',
+ADD COLUMN     "currency" TEXT NOT NULL DEFAULT 'USD',
+ADD COLUMN     "dateFormat" TEXT NOT NULL DEFAULT 'MM/DD/YYYY',
+ADD COLUMN     "timezone" TEXT NOT NULL DEFAULT 'UTC';

@@ -15,6 +15,7 @@ import {
   LeadIcon,
   LogOutIcon,
   PeopleIcon,
+  SettingsIcon,
   TagIcon,
 } from "@/components/ui/icons";
 
@@ -32,7 +33,10 @@ type NavGroup = {
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "Workspace",
-    items: [{ href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> }],
+    items: [
+      { href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> },
+      { href: "/admin/settings", label: "Settings", icon: (p) => <SettingsIcon {...p} /> },
+    ],
   },
   {
     label: "CRM",

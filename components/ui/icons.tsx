@@ -132,6 +132,20 @@ export function CalendarIcon(props: IconProps) {
   );
 }
 
+export function SettingsIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="10" cy="10" r="2.75" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M10 3v2M10 15v2M17 10h-2M5 10H3M15.07 4.93l-1.41 1.41M6.34 13.66l-1.41 1.41M15.07 15.07l-1.41-1.41M6.34 6.34L4.93 4.93"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

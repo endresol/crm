@@ -14,11 +14,24 @@ datasource db {
 
 /// A tenant. Every User and every piece of business data (Client, TimeEntry, ...)
 /// belongs to exactly one Workspace.
+///
+/// timezone/currency/dateFormat/*Color are roadmap #6 (Workspace settings) —
+/// trimmed to just what the roadmap item names (name, branding colors,
+/// timezone/currency/date format). Stored as a preference, not yet wired into
+/// every date/currency render across the app (formatDate/formatCurrency are
+/// still pinned to a fixed locale — see lib/format.ts). No industry/company
+/// size/country/language/quotas/plan/billing — see
+/// docs/feature-audit/15-settings.md for the full real-product model.
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  timezone        String   @default("UTC")
+  currency        String   @default("USD")
+  dateFormat      String   @default("MM/DD/YYYY")
+  backgroundColor String   @default("#F5F3FF")
+  accentColor     String   @default("#732AFF")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   users            User[]
   clients          Client[]
