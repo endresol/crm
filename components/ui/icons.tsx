@@ -78,6 +78,27 @@ export function DealIcon(props: IconProps) {
   );
 }
 
+export function LeadIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M4 16.5c0-2.9 2.69-4.75 6-4.75s6 1.85 6 4.75"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M13.5 4l1.2 1.2L17 3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

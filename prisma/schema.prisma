@@ -24,6 +24,7 @@ model Workspace {
   clients          Client[]
   contacts         Contact[]
   deals            Deal[]
+  leads            Lead[]
   timeEntries      TimeEntry[]
   projects         Project[]
   tasks            Task[]
@@ -85,11 +86,12 @@ model Client {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  timeEntries TimeEntry[]
-  projects    Project[]
-  contacts    Contact[]
-  deals       Deal[]
+  workspace      Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  timeEntries    TimeEntry[]
+  projects       Project[]
+  contacts       Contact[]
+  deals          Deal[]
+  convertedLeads Lead[]
 
   @@index([workspaceId])
   @@map("clients")
@@ -166,6 +168,45 @@ model Deal {
   @@index([clientId])
   @@index([contactId])
   @@map("deals")
+}
+
+/// Matches the real product's status stepper (see docs/feature-audit/05-leads.md).
+enum LeadStatus {
+  NEW
+  UNQUALIFIED
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+}
+
+/// A pre-Client inbound prospect (roadmap #8), separate from Deal's pipeline.
+/// Converting a Lead creates a Client + Contact from its data and flips status
+/// to CONVERTED (the Lead row is kept, not deleted, as conversion history).
+/// Trimmed field set for now (no lead_no, rating, currency-on-budget, comments,
+/// or archiving yet) — see docs/feature-audit/05-leads.md for the full
+/// real-product model.
+model Lead {
+  id                String     @id @default(cuid())
+  workspaceId       String
+  name              String
+  email             String?
+  phone             String?
+  businessName      String?
+  website           String?
+  budget            Float?
+  source            String?
+  description       String?
+  status            LeadStatus @default(NEW)
+  convertedClientId String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  convertedClient Client?   @relation(fields: [convertedClientId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([convertedClientId])
+  @@map("leads")
 }
 
 enum ProjectStatus {

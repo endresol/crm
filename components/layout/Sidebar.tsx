@@ -10,6 +10,7 @@ import {
   ContactIcon,
   DealIcon,
   GridIcon,
+  LeadIcon,
   LogOutIcon,
   PeopleIcon,
   TagIcon,
@@ -37,6 +38,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/clients", label: "Clients", icon: (p) => <PeopleIcon {...p} /> },
       { href: "/admin/contacts", label: "Contacts", icon: (p) => <ContactIcon {...p} /> },
       { href: "/admin/deals", label: "Deals", icon: (p) => <DealIcon {...p} /> },
+      { href: "/admin/leads", label: "Leads", icon: (p) => <LeadIcon {...p} /> },
     ],
   },
   {

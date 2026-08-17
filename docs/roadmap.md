@@ -1,8 +1,9 @@
 # Feature backlog (Phase 4+)
 
 Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client), **Contacts** (#1),
-**Products & Pricing** (#2), **Deals** (#7), **Projects** (#9), **Tasks** (#10), **Milestones** (#11),
-**Gantt chart view** (#12), **Upgrade Time Tracking to log against Project/Task** (#13).
+**Products & Pricing** (#2), **Deals** (#7), **Leads** (#8), **Projects** (#9), **Tasks** (#10),
+**Milestones** (#11), **Gantt chart view** (#12),
+**Upgrade Time Tracking to log against Project/Task** (#13).
 
 Everything below this line is *not yet built*.
 
@@ -12,8 +13,6 @@ Pick items in whatever order you like — just respect the "Requires" line. Item
 4. **Calendar** — basic events (add/view, month view).
 5. **Team members & roles** — invite more users into a workspace, roles beyond Master Admin.
 6. **Workspace settings** — name, branding colors, timezone/currency/date format.
-8. **Leads** — pre-client pipeline with a "Convert to Client" action.
-   Requires: **Contacts** (#1) — done, see above; conversion creates a Client + Contact
 14. **Document Templates system** — shared template/builder infrastructure used by Invoices, Proposals, Contracts, and Questionnaires. Build this before #16–18.
 15. **Invoices** — billing documents with line items.
     Requires: **Products & Pricing** (#2). Templates (#14) optional, not required.
