@@ -51,6 +51,8 @@ model Workspace {
   documentTemplates DocumentTemplate[]
   invoices          Invoice[]
   invoiceLineItems  InvoiceLineItem[]
+  proposals         Proposal[]
+  proposalLineItems ProposalLineItem[]
 
   @@map("workspaces")
 }
@@ -119,6 +121,7 @@ model Client {
   deals          Deal[]
   convertedLeads Lead[]
   invoices       Invoice[]
+  proposals      Proposal[]
 
   @@index([workspaceId])
   @@map("clients")
@@ -142,6 +145,7 @@ model Contact {
   client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   deals     Deal[]
   invoices  Invoice[]
+  proposals Proposal[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -387,9 +391,10 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  priceBookEntries PriceBookEntry[]
-  invoiceLineItems InvoiceLineItem[]
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  priceBookEntries  PriceBookEntry[]
+  invoiceLineItems  InvoiceLineItem[]
+  proposalLineItems ProposalLineItem[]
 
   @@index([workspaceId])
   @@map("products")
@@ -533,8 +538,9 @@ model DocumentTemplate {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   invoices  Invoice[]
+  proposals Proposal[]
 
   @@index([workspaceId])
   @@index([type])
@@ -613,4 +619,68 @@ model InvoiceLineItem {
   @@index([invoiceId])
   @@index([productId])
   @@map("invoice_line_items")
+}
+
+enum ProposalStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+}
+
+/// A client-facing sales document (roadmap #16) — line-items-shaped like
+/// Invoice, not the clause-text shape Contract/Questionnaire use (see the
+/// design note at the top of docs/roadmap.md). No proposal number (display
+/// uses `name`, same trimming as Invoice), no e-signature/"Accept" capture
+/// beyond a self-reported status, and no automatic effect on a linked Deal's
+/// stage — none of that was confirmed in the audit. See
+/// docs/feature-audit/10-proposals.md for the full real-product model.
+model Proposal {
+  id          String         @id @default(cuid())
+  workspaceId String
+  clientId    String
+  contactId   String?
+  templateId  String?
+  name        String
+  status      ProposalStatus @default(DRAFT)
+  currency    String         @default("USD")
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact   Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  template  DocumentTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  lineItems ProposalLineItem[]
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@index([contactId])
+  @@index([templateId])
+  @@map("proposals")
+}
+
+/// A line on a Proposal. Same copy-at-add-time behavior as InvoiceLineItem —
+/// description/unitPrice come from the Product/PriceBookEntry at add-time,
+/// not a live reference.
+model ProposalLineItem {
+  id          String   @id @default(cuid())
+  workspaceId String
+  proposalId  String
+  productId   String?
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  proposal  Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  product   Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([proposalId])
+  @@index([productId])
+  @@map("proposal_line_items")
 }

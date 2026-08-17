@@ -287,6 +287,27 @@ export function TagIcon(props: IconProps) {
   );
 }
 
+export function ProposalIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        d="M6 2.5h5.5L15 6v10a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 015 16V4A1.5 1.5 0 016 2.5z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M11.5 2.5V6H15" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path
+        d="M7.5 11l1.5 1.5 3-3.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

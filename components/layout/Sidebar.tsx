@@ -16,6 +16,7 @@ import {
   LeadIcon,
   LogOutIcon,
   PeopleIcon,
+  ProposalIcon,
   SettingsIcon,
   TagIcon,
   TeamIcon,
@@ -65,6 +66,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/products", label: "Products", icon: (p) => <TagIcon {...p} /> },
       { href: "/admin/invoices", label: "Invoices", icon: (p) => <InvoiceIcon {...p} /> },
+      { href: "/admin/proposals", label: "Proposals", icon: (p) => <ProposalIcon {...p} /> },
       { href: "/admin/templates", label: "Templates", icon: (p) => <TemplateIcon {...p} /> },
     ],
   },
