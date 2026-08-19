@@ -5,7 +5,13 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { workspaceThemeVars } from "@/lib/theme";
-import { CURRENCY_OPTIONS, DATE_FORMAT_OPTIONS, TIMEZONE_OPTIONS } from "../constants";
+import {
+  CURRENCY_OPTIONS,
+  DATE_FORMAT_OPTIONS,
+  DEFAULT_ACCENT_COLOR,
+  DEFAULT_BACKGROUND_COLOR,
+  TIMEZONE_OPTIONS,
+} from "../constants";
 import { updateWorkspaceSettingsAction, type WorkspaceSettingsActionState } from "../actions";
 import type { Workspace } from "@/generated/prisma/client";
 
@@ -79,7 +85,7 @@ export function SettingsForm({ workspace }: { workspace: Workspace }) {
         ))}
       </Select>
 
-      <div style={{ display: "flex", gap: "var(--space-4)" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: "var(--space-4)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
           <label
             htmlFor="backgroundColor"
@@ -112,6 +118,20 @@ export function SettingsForm({ workspace }: { workspace: Workspace }) {
             style={{ width: 64, height: 36, padding: 0, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)" }}
           />
         </div>
+        {/* Resets the pickers (and the live preview via them) back to the
+            product default — still requires Save, same as any other field
+            here, so it can't accidentally overwrite a saved custom color. */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
+            setAccentColor(DEFAULT_ACCENT_COLOR);
+          }}
+        >
+          Reset to default
+        </Button>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>

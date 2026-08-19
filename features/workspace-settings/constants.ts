@@ -35,3 +35,10 @@ export const DATE_FORMAT_OPTIONS = [
   { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
   { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
 ] as const;
+
+// Mirrors the Prisma defaults on Workspace.backgroundColor/accentColor (see
+// prisma/schema.prisma) — kept here too, rather than only in the schema, so
+// the "Reset to default" button in SettingsForm has something to reset to
+// without a round trip.
+export const DEFAULT_BACKGROUND_COLOR = "#F5F8F4";
+export const DEFAULT_ACCENT_COLOR = "#47773C";

@@ -1,7 +1,13 @@
 .sidebar {
   width: var(--sidebar-width);
   flex-shrink: 0;
-  height: 100vh;
+  /* min-height, not height: with enough nav groups expanded, the sidebar's
+     own content can outgrow one viewport. A fixed 100vh clipped it there,
+     and the overflow rendered outside the element entirely — outside its
+     own background — so the page background showed through underneath. A
+     min-height still fills the viewport when content is short, but grows
+     to match its content (and its background with it) when it's not. */
+  min-height: 100vh;
   position: sticky;
   top: 0;
   display: flex;
@@ -48,13 +54,39 @@
   color: var(--color-text);
 }
 
+/* A <button>, not a <div> — it toggles the group. Full-width and left-aligned
+   so it still reads as a section label, not an obvious button, matching the
+   rest of the nav's low-chrome style. */
 .groupLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-text-faint);
   padding: var(--space-4) var(--space-3) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.groupLabel:hover {
+  color: var(--color-text-muted);
+}
+
+.groupChevron {
+  flex-shrink: 0;
+  color: currentColor;
+  transition: transform var(--duration-fast) var(--ease-standard);
+  /* Collapsed is the "closed" state — chevron points right (rotated -90deg
+     from its default down-pointing icon) until the group opens. */
+  transform: rotate(-90deg);
+}
+
+.groupChevronOpen {
+  transform: rotate(0deg);
 }
 
 .nav {

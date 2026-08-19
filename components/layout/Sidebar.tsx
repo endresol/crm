@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { Avatar } from "@/components/ui/Avatar";
 import {
   BriefcaseIcon,
   CalendarIcon,
+  ChevronDownIcon,
   ClockIcon,
   ContactIcon,
   ContractIcon,
@@ -91,6 +92,23 @@ export function Sidebar({
   onLogout: () => Promise<void>;
 }) {
   const pathname = usePathname();
+  // Manually-collapsed group labels. Plain component state, not persisted —
+  // Sidebar stays mounted across client-side nav within /admin (it lives in
+  // the shared layout), so a choice survives normal browsing; it only resets
+  // on a hard reload. Persisting to localStorage would need a client-only
+  // effect to avoid a hydration mismatch (the server has no localStorage to
+  // read), which felt like a lot of machinery for "let me tidy the nav" —
+  // easy to add later if losing the state on reload turns out to matter.
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+
+  function toggleGroup(label: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  }
 
   return (
     <aside className={styles.sidebar}>
@@ -105,26 +123,48 @@ export function Sidebar({
         <span className={styles.logoText}>{workspaceName}</span>
       </div>
 
-      {NAV_GROUPS.map((group) => (
-        <div key={group.label}>
-          <div className={styles.groupLabel}>{group.label}</div>
-          <nav className={styles.nav}>
-            {group.items.map((item) => {
-              const active = pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={[styles.navItem, active ? styles.navItemActive : ""].join(" ")}
-                >
-                  <span className={styles.navIcon}>{item.icon({})}</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      ))}
+      {NAV_GROUPS.map((group) => {
+        const hasActiveItem = group.items.some((item) => pathname.startsWith(item.href));
+        // A collapsed group still opens for the page you're actually on — a
+        // link into it (e.g. from search, or a Client's linked Invoice)
+        // shouldn't leave you unable to see where you landed.
+        const expanded = !collapsed.has(group.label) || hasActiveItem;
+
+        return (
+          <div key={group.label}>
+            <button
+              type="button"
+              className={styles.groupLabel}
+              onClick={() => toggleGroup(group.label)}
+              aria-expanded={expanded}
+            >
+              {group.label}
+              <ChevronDownIcon
+                className={[styles.groupChevron, expanded ? styles.groupChevronOpen : ""].join(" ")}
+                width={14}
+                height={14}
+              />
+            </button>
+            {expanded && (
+              <nav className={styles.nav}>
+                {group.items.map((item) => {
+                  const active = pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={[styles.navItem, active ? styles.navItemActive : ""].join(" ")}
+                    >
+                      <span className={styles.navIcon}>{item.icon({})}</span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
+          </div>
+        );
+      })}
 
       <div className={styles.spacer} />
 
