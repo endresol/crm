@@ -37,15 +37,16 @@ type NavGroup = {
   items: NavItem[];
 };
 
+// Dashboard is "home" — what login and "/" redirect to (see app/page.tsx,
+// features/auth/actions.ts) — so it sits above every group as a standalone
+// link, not filed under a label like the rest of the nav.
+const HOME_ITEM: NavItem = {
+  href: "/admin/dashboard",
+  label: "Dashboard",
+  icon: (p) => <GridIcon {...p} />,
+};
+
 const NAV_GROUPS: NavGroup[] = [
-  {
-    label: "Workspace",
-    items: [
-      { href: "/admin/dashboard", label: "Dashboard", icon: (p) => <GridIcon {...p} /> },
-      { href: "/admin/team", label: "Team", icon: (p) => <TeamIcon {...p} /> },
-      { href: "/admin/settings", label: "Settings", icon: (p) => <SettingsIcon {...p} /> },
-    ],
-  },
   {
     label: "CRM",
     items: [
@@ -72,6 +73,15 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/proposals", label: "Proposals", icon: (p) => <ProposalIcon {...p} /> },
       { href: "/admin/contracts", label: "Contracts", icon: (p) => <ContractIcon {...p} /> },
       { href: "/admin/templates", label: "Templates", icon: (p) => <TemplateIcon {...p} /> },
+    ],
+  },
+  // Team and Settings aren't reached often day-to-day, so they're the last
+  // group rather than sitting right under Dashboard where they used to.
+  {
+    label: "Workspace",
+    items: [
+      { href: "/admin/team", label: "Team", icon: (p) => <TeamIcon {...p} /> },
+      { href: "/admin/settings", label: "Settings", icon: (p) => <SettingsIcon {...p} /> },
     ],
   },
 ];
@@ -122,6 +132,19 @@ export function Sidebar({
         )}
         <span className={styles.logoText}>{workspaceName}</span>
       </div>
+
+      <nav className={styles.nav} style={{ marginBottom: "var(--space-2)" }}>
+        <Link
+          href={HOME_ITEM.href}
+          className={[
+            styles.navItem,
+            pathname.startsWith(HOME_ITEM.href) ? styles.navItemActive : "",
+          ].join(" ")}
+        >
+          <span className={styles.navIcon}>{HOME_ITEM.icon({})}</span>
+          {HOME_ITEM.label}
+        </Link>
+      </nav>
 
       {NAV_GROUPS.map((group) => {
         const hasActiveItem = group.items.some((item) => pathname.startsWith(item.href));
