@@ -1,6 +1,9 @@
 import styles from "./Avatar.module.css";
 
-const PALETTE = ["#6d5ef5", "#2f7bee", "#17a869", "#d98a1f", "#e0393e", "#9333ea", "#0891b2"];
+// Categorical palette for generated initials avatars — deliberately multi-hue
+// so two people are easy to tell apart. Leads with the brand green; the rest
+// stay varied on purpose and aren't tied to the accent.
+const PALETTE = ["#47773c", "#2f7bee", "#0d9488", "#d98a1f", "#e0393e", "#9333ea", "#0891b2"];
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);

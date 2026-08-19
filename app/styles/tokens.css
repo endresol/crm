@@ -1,30 +1,39 @@
 /**
  * Design tokens — the single source of truth for the visual language.
- * Derived from /inspo (soft violet-accented SaaS dashboards) and the real
- * ClientManager product's own accent color. No Tailwind — every component
- * consumes these as CSS custom properties from its own CSS Module.
+ * No Tailwind — every component consumes these as CSS custom properties from
+ * its own CSS Module.
+ *
+ * Brand green. The primary is #47773c rather than the lighter #68ae5c the
+ * green was picked from: white text on #68ae5c is only 2.69:1, which fails
+ * WCAG AA, and every primary button / active nav pill in the app puts white on
+ * this token. #47773c is the same hue at 5.29:1. The lighter #68ae5c still
+ * drives the soft end of the ramp and the app icon, so the product still reads
+ * as that green.
+ *
+ * Neutrals carry a faint green tint (they were violet-tinted for the old
+ * accent) so surfaces don't fight the brand.
  */
 
 :root {
   /* Surfaces */
-  --color-bg: #f6f5fb;
+  --color-bg: #f5f8f4;
   --color-surface: #ffffff;
-  --color-surface-hover: #fbfaff;
-  --color-border: #e7e5f1;
-  --color-border-strong: #d9d6e8;
+  --color-surface-hover: #fafcf9;
+  --color-border: #e4ebe2;
+  --color-border-strong: #d3ddd0;
 
   /* Text */
-  --color-text: #16151f;
-  --color-text-muted: #6b6a7c;
-  --color-text-faint: #9997ab;
+  --color-text: #161a15;
+  --color-text-muted: #66735f;
+  --color-text-faint: #8a967f;
   --color-text-on-primary: #ffffff;
 
   /* Brand / accent */
-  --color-primary: #6d5ef5;
-  --color-primary-hover: #5b4cea;
-  --color-primary-active: #4c3fd6;
-  --color-primary-soft: #efebff;
-  --color-primary-soft-text: #5a49e0;
+  --color-primary: #47773c;
+  --color-primary-hover: #3e6935;
+  --color-primary-active: #365a2e;
+  --color-primary-soft: #edf5eb;
+  --color-primary-soft-text: #416d37;
 
   /* Status */
   --color-success: #17a869;

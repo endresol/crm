@@ -54,11 +54,42 @@ function shift(rgb: Rgb, amount: number): Rgb {
   };
 }
 
-/** Perceived brightness (ITU-R BT.601), used to decide whether text on top of
- * the accent should be white or near-black. A pale accent with white text on it
- * is the one combination that becomes genuinely unreadable. */
+/** Perceived brightness (ITU-R BT.601). Good enough for deciding which
+ * direction to nudge a surface, where only the visual impression matters. */
 function luminance({ r, g, b }: Rgb): number {
   return (r * 299 + g * 587 + b * 114) / 1000 / 255;
+}
+
+/** WCAG relative luminance — the basis for a real contrast ratio, which is not
+ * the same thing as perceived brightness above. */
+function relativeLuminance({ r, g, b }: Rgb): number {
+  const channel = (value: number) => {
+    const c = value / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+function contrastRatio(a: Rgb, b: Rgb): number {
+  const [hi, lo] = [relativeLuminance(a), relativeLuminance(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+}
+
+/** Near-black used for text on light accents. Matches --color-text. */
+const DARK_ON_ACCENT: Rgb = { r: 0x16, g: 0x1a, b: 0x15 };
+const WHITE: Rgb = { r: 255, g: 255, b: 255 };
+
+/**
+ * Picks white or near-black for text sitting on `accent`, by actual contrast
+ * ratio rather than a brightness cutoff. A cutoff gets mid-tone accents wrong:
+ * a mid green like #68ae5c reads as "dark enough for white text" by perceived
+ * brightness, but white on it is only 2.69:1 — well under WCAG AA — while
+ * near-black is 6.72:1.
+ */
+function textOnAccent(accent: Rgb): string {
+  return contrastRatio(accent, WHITE) >= contrastRatio(accent, DARK_ON_ACCENT)
+    ? "#ffffff"
+    : "#161a15";
 }
 
 /**
@@ -84,7 +115,7 @@ export function workspaceThemeVars(colors: WorkspaceColors): Record<string, stri
     vars["--color-primary-active"] = toHex(shift(accent, -0.24));
     vars["--color-primary-soft"] = toHex(shift(accent, 0.88));
     vars["--color-primary-soft-text"] = toHex(shift(accent, -0.15));
-    vars["--color-text-on-primary"] = luminance(accent) > 0.6 ? "#16151f" : "#ffffff";
+    vars["--color-text-on-primary"] = textOnAccent(accent);
   }
 
   return vars;

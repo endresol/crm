@@ -1,16 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ClientManager">
   <!--
-    App icon: a geometric "C" on the brand violet, matching the sidebar's mark.
+    App icon: a geometric "C" on the brand green, matching the sidebar's mark.
     Drawn as a stroked arc rather than <text> on purpose — a favicon is rendered
     by the browser chrome, which has no access to the app's webfont, so a text
     glyph would fall back to whatever the system has and shift between machines.
     The stroke is deliberately heavy: at a 16px tab size a lighter weight closes
     up the counter and the letter reads as a filled dot.
+
+    The gradient runs from #68ae5c (the green the brand was picked from) down to
+    the darker end of the primary ramp, so the white glyph keeps enough contrast
+    across the tile — a flat fill of the lighter green alone is only 2.69:1.
   -->
   <defs>
     <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#8b7cff"/>
-      <stop offset="1" stop-color="#5b4cea"/>
+      <stop offset="0" stop-color="#68ae5c"/>
+      <stop offset="1" stop-color="#3e6935"/>
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#tile)"/>

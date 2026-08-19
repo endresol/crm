@@ -3,7 +3,7 @@ import { z } from "zod";
 const hexColor = z
   .string()
   .trim()
-  .regex(/^#[0-9a-fA-F]{6}$/, "Enter a color as a 6-digit hex code, e.g. #732AFF.");
+  .regex(/^#[0-9a-fA-F]{6}$/, "Enter a color as a 6-digit hex code, e.g. #47773C.");
 
 export const workspaceSettingsSchema = z.object({
   name: z.string().trim().min(1, "Workspace name is required.").max(120),

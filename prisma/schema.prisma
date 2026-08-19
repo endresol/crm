@@ -36,8 +36,8 @@ model Workspace {
   timezone        String   @default("UTC")
   currency        String   @default("USD")
   dateFormat      String   @default("MM/DD/YYYY")
-  backgroundColor String   @default("#F5F3FF")
-  accentColor     String   @default("#732AFF")
+  backgroundColor String   @default("#F5F8F4")
+  accentColor     String   @default("#47773C")
   logoUrl         String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
