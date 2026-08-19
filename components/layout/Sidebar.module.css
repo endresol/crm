@@ -26,9 +26,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--color-text-on-primary);
   font-weight: 700;
   font-size: 15px;
+}
+
+/* An uploaded workspace logo replaces .logoMark. `contain` (not `cover`) so a
+   wordmark or a non-square logo is shown whole rather than cropped, and no
+   background tint so a transparent PNG sits on the sidebar surface. */
+.logoImage {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .logoText {
@@ -91,4 +102,42 @@
 .footer {
   border-top: 1px solid var(--color-border);
   padding-top: var(--space-4);
+}
+
+/* Profile row above the sign-out button: avatar + name/email stacked. */
+.profileLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-1);
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.profileLink:hover {
+  background: var(--color-bg);
+}
+
+.profileText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.profileName {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileEmail {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

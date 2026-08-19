@@ -21,16 +21,26 @@ function colorFor(name: string) {
 export function Avatar({
   name,
   size = "md",
+  imageUrl,
 }: {
   name: string;
   size?: "sm" | "md" | "lg";
+  /** Uploaded avatar (see lib/uploads.ts). Falls back to generated initials. */
+  imageUrl?: string | null;
 }) {
+  const className = [styles.avatar, styles[size]].join(" ");
+
+  if (imageUrl) {
+    // Plain <img>, not next/image: these are Vercel Blob URLs on an arbitrary
+    // remote host, which next/image would require allow-listing per host in
+    // next.config.ts. Sizes here are small and fixed, so the optimizer buys
+    // little.
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img className={className} src={imageUrl} alt={name} title={name} />;
+  }
+
   return (
-    <span
-      className={[styles.avatar, styles[size]].join(" ")}
-      style={{ background: colorFor(name) }}
-      title={name}
-    >
+    <span className={className} style={{ background: colorFor(name) }} title={name}>
       {initials(name)}
     </span>
   );

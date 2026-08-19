@@ -8,6 +8,9 @@
   color: var(--color-text-on-primary);
   font-weight: 600;
   letter-spacing: 0.02em;
+  /* Applies when .avatar is an <img> (an uploaded photo of any aspect ratio) —
+     crops to the circle instead of squashing. */
+  object-fit: cover;
 }
 
 .sm {

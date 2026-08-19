@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { uploadImage } from "@/lib/uploads";
 import { workspaceSettingsSchema } from "./schemas";
-import { updateWorkspaceSettings } from "./service";
+import { setWorkspaceLogo, updateWorkspaceSettings } from "./service";
 
 export type WorkspaceSettingsActionState = {
   error?: string;
@@ -34,4 +35,35 @@ export async function updateWorkspaceSettingsAction(
   revalidatePath("/admin/settings");
   revalidatePath("/", "layout");
   return { success: true };
+}
+
+export async function uploadWorkspaceLogoAction(
+  _prevState: WorkspaceSettingsActionState,
+  formData: FormData,
+): Promise<WorkspaceSettingsActionState> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose an image to upload." };
+  }
+
+  const uploaded = await uploadImage(file, `logos/${user.workspaceId}`);
+  if ("error" in uploaded) return { error: uploaded.error };
+
+  const result = await setWorkspaceLogo(user.workspaceId, uploaded.url);
+  if (!result.ok) return { error: result.reason };
+
+  // The logo renders in the sidebar on every admin page, not just this one.
+  revalidatePath("/admin", "layout");
+  return { success: true };
+}
+
+export async function removeWorkspaceLogoAction(): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  await setWorkspaceLogo(user.workspaceId, null);
+  revalidatePath("/admin", "layout");
 }

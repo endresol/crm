@@ -22,6 +22,14 @@ datasource db {
 /// still pinned to a fixed locale — see lib/format.ts). No industry/company
 /// size/country/language/quotas/plan/billing — see
 /// docs/feature-audit/15-settings.md for the full real-product model.
+///
+/// backgroundColor/accentColor are applied as CSS custom property overrides on
+/// the admin shell (see lib/theme.ts + components/layout/WorkspaceTheme.tsx) —
+/// the accent's hover/active/soft variants are derived from it rather than
+/// stored, so the settings form stays a two-swatch picker like the real product.
+/// logoUrl is a Vercel Blob public URL (see lib/uploads.ts); a public CDN URL
+/// rather than stored bytes specifically so email templates and the future
+/// Client Portal (roadmap #20) can reference it directly.
 model Workspace {
   id              String   @id @default(cuid())
   name            String
@@ -30,6 +38,7 @@ model Workspace {
   dateFormat      String   @default("MM/DD/YYYY")
   backgroundColor String   @default("#F5F3FF")
   accentColor     String   @default("#732AFF")
+  logoUrl         String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -70,6 +79,11 @@ enum UserRole {
 }
 
 /// An admin-app principal (as opposed to a future Client Portal Contact principal).
+///
+/// avatarUrl is a Vercel Blob public URL (see lib/uploads.ts), same reasoning as
+/// Workspace.logoUrl — a CDN URL rather than stored bytes so it can be embedded
+/// in documents/emails later. Null falls back to the generated initials avatar
+/// (components/ui/Avatar.tsx), which is why it stays optional.
 model User {
   id           String   @id @default(cuid())
   workspaceId  String
@@ -77,6 +91,7 @@ model User {
   email        String   @unique
   passwordHash String
   role         UserRole @default(MASTER_ADMIN)
+  avatarUrl    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

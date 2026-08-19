@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { workspaceThemeVars } from "@/lib/theme";
 import { CURRENCY_OPTIONS, DATE_FORMAT_OPTIONS, TIMEZONE_OPTIONS } from "../constants";
 import { updateWorkspaceSettingsAction, type WorkspaceSettingsActionState } from "../actions";
 import type { Workspace } from "@/generated/prisma/client";
@@ -12,6 +13,26 @@ const initialState: WorkspaceSettingsActionState = {};
 
 export function SettingsForm({ workspace }: { workspace: Workspace }) {
   const [state, formAction, pending] = useActionState(updateWorkspaceSettingsAction, initialState);
+  const [backgroundColor, setBackgroundColor] = useState(workspace.backgroundColor);
+  const [accentColor, setAccentColor] = useState(workspace.accentColor);
+
+  // Live preview: push the same custom properties the server renders (see
+  // components/layout/WorkspaceTheme.tsx) straight onto :root as the swatches
+  // change, so picking a color re-themes the surrounding app immediately
+  // instead of only after saving. Cleared on unmount so navigating away
+  // without saving doesn't leave an unsaved theme applied.
+  useEffect(() => {
+    const root = document.documentElement;
+    const vars = workspaceThemeVars({ backgroundColor, accentColor });
+    for (const [property, value] of Object.entries(vars)) {
+      root.style.setProperty(property, value);
+    }
+    return () => {
+      for (const property of Object.keys(vars)) {
+        root.style.removeProperty(property);
+      }
+    };
+  }, [backgroundColor, accentColor]);
 
   return (
     <form
@@ -70,7 +91,8 @@ export function SettingsForm({ workspace }: { workspace: Workspace }) {
             id="backgroundColor"
             name="backgroundColor"
             type="color"
-            defaultValue={workspace.backgroundColor}
+            value={backgroundColor}
+            onChange={(e) => setBackgroundColor(e.target.value)}
             style={{ width: 64, height: 36, padding: 0, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)" }}
           />
         </div>
@@ -85,7 +107,8 @@ export function SettingsForm({ workspace }: { workspace: Workspace }) {
             id="accentColor"
             name="accentColor"
             type="color"
-            defaultValue={workspace.accentColor}
+            value={accentColor}
+            onChange={(e) => setAccentColor(e.target.value)}
             style={{ width: 64, height: 36, padding: 0, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)" }}
           />
         </div>

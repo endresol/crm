@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode } from "react";
 import styles from "./Sidebar.module.css";
+import { Avatar } from "@/components/ui/Avatar";
 import {
   BriefcaseIcon,
   CalendarIcon,
@@ -76,11 +77,17 @@ const NAV_GROUPS: NavGroup[] = [
 
 export function Sidebar({
   workspaceName,
+  workspaceLogoUrl,
   userName,
+  userEmail,
+  userAvatarUrl,
   onLogout,
 }: {
   workspaceName: string;
+  workspaceLogoUrl?: string | null;
   userName: string;
+  userEmail: string;
+  userAvatarUrl?: string | null;
   onLogout: () => Promise<void>;
 }) {
   const pathname = usePathname();
@@ -88,7 +95,13 @@ export function Sidebar({
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
-        <span className={styles.logoMark}>CM</span>
+        {workspaceLogoUrl ? (
+          // Plain <img> rather than next/image — see the note in components/ui/Avatar.tsx.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className={styles.logoImage} src={workspaceLogoUrl} alt={workspaceName} />
+        ) : (
+          <span className={styles.logoMark}>CM</span>
+        )}
         <span className={styles.logoText}>{workspaceName}</span>
       </div>
 
@@ -116,12 +129,19 @@ export function Sidebar({
       <div className={styles.spacer} />
 
       <div className={styles.footer}>
+        <Link href="/admin/profile" className={styles.profileLink}>
+          <Avatar name={userName} imageUrl={userAvatarUrl} size="sm" />
+          <span className={styles.profileText}>
+            <span className={styles.profileName}>{userName}</span>
+            <span className={styles.profileEmail}>{userEmail}</span>
+          </span>
+        </Link>
         <form action={onLogout}>
           <button type="submit" className={styles.navItem} style={{ width: "100%" }}>
             <span className={styles.navIcon}>
               <LogOutIcon />
             </span>
-            Sign out ({userName})
+            Sign out
           </button>
         </form>
       </div>
