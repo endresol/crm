@@ -42,6 +42,15 @@ export function SettingsForm({ workspace }: { workspace: Workspace }) {
 
   return (
     <form
+      // Keyed on updatedAt so a successful save remounts the form fresh.
+      // Every field below is uncontrolled (defaultValue) or local useState
+      // seeded once from `workspace` — after Save, revalidatePath sends this
+      // component fresh props, but React only applies defaultValue/initial
+      // useState at mount, not on prop updates to an already-mounted element.
+      // Without the key, the visible values are exactly what you typed, which
+      // is indistinguishable from "the value shown never actually changed" —
+      // a manual reload (a real remount) was the only way to see it took.
+      key={workspace.updatedAt.toISOString()}
       action={formAction}
       style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", maxWidth: 480 }}
     >
