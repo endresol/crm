@@ -9,9 +9,11 @@ import { PriceBookEntryForm } from "./PriceBookEntryForm";
 export function AddPriceBookEntryButton({
   priceBookId,
   products,
+  defaultCurrency,
 }: {
   priceBookId: string;
   products: { id: string; name: string; code: string }[];
+  defaultCurrency?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -25,6 +27,7 @@ export function AddPriceBookEntryButton({
         <PriceBookEntryForm
           priceBookId={priceBookId}
           products={products}
+          defaultCurrency={defaultCurrency}
           onSaved={() => setOpen(false)}
           onCancel={() => setOpen(false)}
         />

@@ -12,6 +12,7 @@ export function AddProposalButton({
   contacts,
   templates,
   workspaceName,
+  defaultCurrency,
   fixedClientId,
   label = "Add Proposal",
 }: {
@@ -19,6 +20,7 @@ export function AddProposalButton({
   contacts: { id: string; fullName: string; clientId: string }[];
   templates: { id: string; name: string; content: string }[];
   workspaceName: string;
+  defaultCurrency?: string;
   fixedClientId?: string;
   label?: string;
 }) {
@@ -37,6 +39,7 @@ export function AddProposalButton({
           contacts={contacts}
           templates={templates}
           workspaceName={workspaceName}
+          defaultCurrency={defaultCurrency}
           fixedClientId={fixedClientId}
           submitLabel="Create proposal"
           onCancel={() => setOpen(false)}

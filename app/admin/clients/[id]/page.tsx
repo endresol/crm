@@ -254,6 +254,7 @@ export default async function ClientDetailPage({
                   }))}
                   templates={invoiceTemplates}
                   workspaceName={user.workspaceName}
+                  defaultCurrency={user.workspaceCurrency}
                   label="New invoice"
                 />
               }
@@ -295,7 +296,7 @@ export default async function ClientDetailPage({
         </div>
 
         <div style={{ marginTop: "var(--space-6)" }}>
-          <TimeEntriesList entries={timeEntries} />
+          <TimeEntriesList entries={timeEntries} dateFormat={user.workspaceDateFormat} />
         </div>
       </div>
     </>

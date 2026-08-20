@@ -28,6 +28,7 @@ export function InvoiceForm({
   contacts,
   templates,
   workspaceName,
+  defaultCurrency = "USD",
   fixedClientId,
   defaultValues,
   submitLabel,
@@ -38,6 +39,9 @@ export function InvoiceForm({
   contacts: { id: string; fullName: string; clientId: string }[];
   templates: { id: string; name: string; content: string }[];
   workspaceName: string;
+  // Only used when defaultValues.currency is absent, i.e. only affects the
+  // "Create invoice" drawer — editing always keeps the invoice's own currency.
+  defaultCurrency?: string;
   fixedClientId?: string;
   defaultValues?: {
     name?: string;
@@ -179,7 +183,7 @@ export function InvoiceForm({
         />
       </div>
 
-      <Input name="currency" label="Currency" optional defaultValue={defaultValues?.currency ?? "USD"} />
+      <Input name="currency" label="Currency" optional defaultValue={defaultValues?.currency ?? defaultCurrency} />
 
       <div>
         <div

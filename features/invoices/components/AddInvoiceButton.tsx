@@ -12,6 +12,7 @@ export function AddInvoiceButton({
   contacts,
   templates,
   workspaceName,
+  defaultCurrency,
   fixedClientId,
   label = "Create invoice",
 }: {
@@ -19,6 +20,7 @@ export function AddInvoiceButton({
   contacts: { id: string; fullName: string; clientId: string }[];
   templates: { id: string; name: string; content: string }[];
   workspaceName: string;
+  defaultCurrency?: string;
   fixedClientId?: string;
   label?: string;
 }) {
@@ -37,6 +39,7 @@ export function AddInvoiceButton({
           contacts={contacts}
           templates={templates}
           workspaceName={workspaceName}
+          defaultCurrency={defaultCurrency}
           fixedClientId={fixedClientId}
           submitLabel="Create invoice"
           onCancel={() => setOpen(false)}

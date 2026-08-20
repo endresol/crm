@@ -88,8 +88,8 @@ export default async function ContractDetailPage({
                   : undefined
               }
             />
-            <Field label="Start date" value={contract.startDate ? formatDate(contract.startDate) : undefined} />
-            <Field label="End date" value={contract.endDate ? formatDate(contract.endDate) : undefined} />
+            <Field label="Start date" value={contract.startDate ? formatDate(contract.startDate, user.workspaceDateFormat) : undefined} />
+            <Field label="End date" value={contract.endDate ? formatDate(contract.endDate, user.workspaceDateFormat) : undefined} />
           </dl>
 
           <ContractEditor

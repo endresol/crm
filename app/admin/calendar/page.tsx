@@ -47,6 +47,7 @@ export default async function CalendarPage({
           prevHref={hrefFor(prevDate.getFullYear(), prevDate.getMonth())}
           nextHref={hrefFor(nextDate.getFullYear(), nextDate.getMonth())}
           todayHref={hrefFor(today.getFullYear(), today.getMonth())}
+          timezone={user.workspaceTimezone}
         />
       </div>
     </>

@@ -85,8 +85,8 @@ export default async function InvoiceDetailPage({
             <Field label="Client" value={invoice.client.name} href={`/admin/clients/${invoice.client.id}`} />
             <Field label="Contact" value={invoice.contact?.fullName} />
             <Field label="Template" value={invoice.template?.name} />
-            <Field label="Invoice date" value={formatDate(invoice.invoiceDate)} />
-            <Field label="Due date" value={invoice.dueDate ? formatDate(invoice.dueDate) : undefined} />
+            <Field label="Invoice date" value={formatDate(invoice.invoiceDate, user.workspaceDateFormat)} />
+            <Field label="Due date" value={invoice.dueDate ? formatDate(invoice.dueDate, user.workspaceDateFormat) : undefined} />
             <Field label="Currency" value={invoice.currency} />
           </dl>
 

@@ -12,6 +12,7 @@ export function AddContractButton({
   contacts,
   deals,
   templates,
+  defaultCurrency,
   fixedClientId,
   label = "Add Contract",
 }: {
@@ -19,6 +20,7 @@ export function AddContractButton({
   contacts: { id: string; fullName: string; clientId: string }[];
   deals: { id: string; name: string; clientId: string }[];
   templates: { id: string; name: string }[];
+  defaultCurrency?: string;
   fixedClientId?: string;
   label?: string;
 }) {
@@ -37,6 +39,7 @@ export function AddContractButton({
           contacts={contacts}
           deals={deals}
           templates={templates}
+          defaultCurrency={defaultCurrency}
           fixedClientId={fixedClientId}
           submitLabel="Create contract"
           onCancel={() => setOpen(false)}

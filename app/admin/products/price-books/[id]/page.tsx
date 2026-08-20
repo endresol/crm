@@ -32,7 +32,11 @@ export default async function PriceBookDetailPage({
         subtitle="Price book"
         actions={
           <>
-            <AddPriceBookEntryButton priceBookId={priceBook.id} products={unpricedProducts} />
+            <AddPriceBookEntryButton
+              priceBookId={priceBook.id}
+              products={unpricedProducts}
+              defaultCurrency={user.workspaceCurrency}
+            />
             <DeletePriceBookButton priceBookId={priceBook.id} />
           </>
         }
@@ -87,7 +91,7 @@ export default async function PriceBookDetailPage({
                       <td style={{ fontWeight: 600 }}>{entry.product.name}</td>
                       <td>{entry.product.code}</td>
                       <td>{formatCurrency(entry.unitPrice, entry.currency)}</td>
-                      <td>{formatDate(entry.createdAt)}</td>
+                      <td>{formatDate(entry.createdAt, user.workspaceDateFormat)}</td>
                       <td>
                         <DeletePriceBookEntryButton entryId={entry.id} priceBookId={priceBook.id} />
                       </td>

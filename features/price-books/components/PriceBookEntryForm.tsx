@@ -11,11 +11,13 @@ const initialState: PriceBookEntryActionState = {};
 export function PriceBookEntryForm({
   priceBookId,
   products,
+  defaultCurrency = "USD",
   onSaved,
   onCancel,
 }: {
   priceBookId: string;
   products: { id: string; name: string; code: string }[];
+  defaultCurrency?: string;
   onSaved: () => void;
   onCancel?: () => void;
 }) {
@@ -71,7 +73,7 @@ export function PriceBookEntryForm({
 
       <div style={{ display: "flex", gap: "var(--space-4)" }}>
         <Input name="unitPrice" type="number" min={0} step="0.01" label="Unit price" required />
-        <Input name="currency" label="Currency" defaultValue="USD" maxLength={8} />
+        <Input name="currency" label="Currency" defaultValue={defaultCurrency} maxLength={8} />
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-3)" }}>

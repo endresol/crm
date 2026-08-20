@@ -39,7 +39,7 @@ export default async function ProfilePage() {
         <Card>
           <CardHeader
             title="Account details"
-            subtitle={`Member since ${formatDate(profile.createdAt)}.`}
+            subtitle={`Member since ${formatDate(profile.createdAt, user.workspaceDateFormat)}.`}
           />
           <ProfileForm name={profile.name} email={profile.email} />
         </Card>

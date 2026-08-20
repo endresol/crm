@@ -17,6 +17,7 @@ export function ProposalForm({
   contacts,
   templates,
   workspaceName,
+  defaultCurrency = "USD",
   fixedClientId,
   defaultValues,
   submitLabel,
@@ -27,6 +28,8 @@ export function ProposalForm({
   contacts: { id: string; fullName: string; clientId: string }[];
   templates: { id: string; name: string; content: string }[];
   workspaceName: string;
+  // Only used when defaultValues.currency is absent — only the create drawer.
+  defaultCurrency?: string;
   fixedClientId?: string;
   defaultValues?: {
     name?: string;
@@ -135,7 +138,7 @@ export function ProposalForm({
             </option>
           ))}
         </Select>
-        <Input name="currency" label="Currency" optional defaultValue={defaultValues?.currency ?? "USD"} />
+        <Input name="currency" label="Currency" optional defaultValue={defaultValues?.currency ?? defaultCurrency} />
       </div>
 
       <div>

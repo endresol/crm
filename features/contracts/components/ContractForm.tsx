@@ -21,6 +21,7 @@ export function ContractForm({
   contacts,
   deals,
   templates,
+  defaultCurrency = "USD",
   fixedClientId,
   defaultValues,
   submitLabel,
@@ -31,6 +32,8 @@ export function ContractForm({
   contacts: { id: string; fullName: string; clientId: string }[];
   deals: { id: string; name: string; clientId: string }[];
   templates: { id: string; name: string }[];
+  // Only used when defaultValues.currency is absent — only the create drawer.
+  defaultCurrency?: string;
   fixedClientId?: string;
   defaultValues?: {
     name?: string;
@@ -157,7 +160,7 @@ export function ContractForm({
           optional
           defaultValue={defaultValues?.contractValue ?? ""}
         />
-        <Input name="currency" label="Currency" optional defaultValue={defaultValues?.currency ?? "USD"} />
+        <Input name="currency" label="Currency" optional defaultValue={defaultValues?.currency ?? defaultCurrency} />
       </div>
 
       <div style={{ display: "flex", gap: "var(--space-4)" }}>

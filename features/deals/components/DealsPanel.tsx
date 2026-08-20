@@ -31,11 +31,15 @@ export function DealsPanel({
   clients,
   contacts,
   fixedClientId,
+  dateFormat,
+  defaultCurrency,
 }: {
   deals: DealWithRelations[];
   clients?: { id: string; name: string }[];
   contacts: { id: string; fullName: string; clientId: string }[];
   fixedClientId?: string;
+  dateFormat: string;
+  defaultCurrency: string;
 }) {
   const [view, setView] = useState<View>("table");
   const [editing, setEditing] = useState<DealWithRelations | "new" | null>(null);
@@ -125,7 +129,7 @@ export function DealsPanel({
                   </td>
                 )}
                 <td>{deal.contact?.fullName || "—"}</td>
-                <td>{deal.expectedCloseDate ? formatDate(deal.expectedCloseDate) : "—"}</td>
+                <td>{deal.expectedCloseDate ? formatDate(deal.expectedCloseDate, dateFormat) : "—"}</td>
               </TableRow>
             ))}
           </tbody>
@@ -143,6 +147,7 @@ export function DealsPanel({
             clients={clients}
             contacts={contacts}
             fixedClientId={fixedClientId}
+            defaultCurrency={defaultCurrency}
             submitLabel="Create deal"
             onSaved={() => setEditing(null)}
             onCancel={() => setEditing(null)}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { PlusIcon } from "@/components/ui/icons";
+import { formatTime } from "@/lib/format";
 import {
   WEEKDAY_LABELS,
   getMonthLabel,
@@ -33,6 +34,7 @@ export function CalendarPanel({
   prevHref,
   nextHref,
   todayHref,
+  timezone,
 }: {
   year: number;
   month: number;
@@ -41,6 +43,15 @@ export function CalendarPanel({
   prevHref: string;
   nextHref: string;
   todayHref: string;
+  // Only used to *display* each event's time (below) — the month grid itself,
+  // and the datetime-local inputs in EventForm, still work in the viewer's
+  // own browser timezone. Properly moving those to the workspace's timezone
+  // needs converting a typed-in wall-clock time to the right UTC instant for
+  // an arbitrary IANA zone, which the platform Intl API doesn't do directly
+  // (unlike the read direction lib/format.ts uses) — that's real enough
+  // scope (and risk of silently shifting event times if done wrong) to be
+  // its own follow-up rather than folded in here.
+  timezone: string;
 }) {
   const [editing, setEditing] = useState<CalendarEvent | { date: Date } | null>(null);
   const today = new Date();
@@ -120,6 +131,9 @@ export function CalendarPanel({
                     className={styles.eventChip}
                     onClick={() => setEditing(event)}
                   >
+                    <span className={styles.eventChipTime}>
+                      {formatTime(event.startAt, timezone)}
+                    </span>{" "}
                     {event.title}
                   </button>
                 ))}

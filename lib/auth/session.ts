@@ -19,6 +19,9 @@ export type SessionUser = {
   workspaceLogoUrl: string | null;
   workspaceBackgroundColor: string;
   workspaceAccentColor: string;
+  workspaceTimezone: string;
+  workspaceDateFormat: string;
+  workspaceCurrency: string;
 };
 
 /** Creates a DB-backed session for `userId` and sets the httpOnly cookie. */
@@ -67,6 +70,9 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     workspaceLogoUrl: session.user.workspace.logoUrl,
     workspaceBackgroundColor: session.user.workspace.backgroundColor,
     workspaceAccentColor: session.user.workspace.accentColor,
+    workspaceTimezone: session.user.workspace.timezone,
+    workspaceDateFormat: session.user.workspace.dateFormat,
+    workspaceCurrency: session.user.workspace.currency,
   };
 }
 

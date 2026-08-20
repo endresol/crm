@@ -6,9 +6,11 @@ import type { Task } from "@/generated/prisma/client";
 export function TaskBoard({
   tasks,
   onTaskClick,
+  dateFormat,
 }: {
   tasks: Task[];
   onTaskClick: (task: Task) => void;
+  dateFormat: string;
 }) {
   const byStatus = TASK_STATUSES.map((status) => ({
     status,
@@ -34,7 +36,7 @@ export function TaskBoard({
               >
                 <div className={styles.cardTitle}>{task.title}</div>
                 {task.dueDate && (
-                  <div className={styles.cardDue}>Due {formatDate(task.dueDate)}</div>
+                  <div className={styles.cardDue}>Due {formatDate(task.dueDate, dateFormat)}</div>
                 )}
               </button>
             ))}

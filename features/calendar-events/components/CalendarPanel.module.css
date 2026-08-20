@@ -152,3 +152,8 @@
 .eventChip:hover {
   filter: brightness(0.95);
 }
+
+.eventChipTime {
+  font-weight: 700;
+  opacity: 0.75;
+}

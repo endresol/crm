@@ -69,8 +69,8 @@ export default async function ProjectsPage() {
                       {PROJECT_STATUS_LABELS[project.status]}
                     </Badge>
                   </td>
-                  <td>{project.startDate ? formatDate(project.startDate) : "—"}</td>
-                  <td>{project.endDate ? formatDate(project.endDate) : "—"}</td>
+                  <td>{project.startDate ? formatDate(project.startDate, user.workspaceDateFormat) : "—"}</td>
+                  <td>{project.endDate ? formatDate(project.endDate, user.workspaceDateFormat) : "—"}</td>
                 </TableRow>
               ))
             )}

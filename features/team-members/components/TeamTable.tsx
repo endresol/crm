@@ -12,7 +12,15 @@ import { TEAM_ROLES } from "../schemas";
 
 type Member = { id: string; name: string; email: string; role: string; createdAt: Date | string };
 
-export function TeamTable({ members, currentUserId }: { members: Member[]; currentUserId: string }) {
+export function TeamTable({
+  members,
+  currentUserId,
+  dateFormat,
+}: {
+  members: Member[];
+  currentUserId: string;
+  dateFormat: string;
+}) {
   return (
     <Table>
       <thead>
@@ -26,14 +34,27 @@ export function TeamTable({ members, currentUserId }: { members: Member[]; curre
       </thead>
       <tbody>
         {members.map((member) => (
-          <MemberRow key={member.id} member={member} isSelf={member.id === currentUserId} />
+          <MemberRow
+            key={member.id}
+            member={member}
+            isSelf={member.id === currentUserId}
+            dateFormat={dateFormat}
+          />
         ))}
       </tbody>
     </Table>
   );
 }
 
-function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
+function MemberRow({
+  member,
+  isSelf,
+  dateFormat,
+}: {
+  member: Member;
+  isSelf: boolean;
+  dateFormat: string;
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -93,7 +114,7 @@ function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
           ))}
         </select>
       </td>
-      <td>{formatDate(member.createdAt)}</td>
+      <td>{formatDate(member.createdAt, dateFormat)}</td>
       <td>
         {isSelf ? null : confirmingDelete ? (
           <div style={{ display: "flex", gap: "var(--space-2)" }}>

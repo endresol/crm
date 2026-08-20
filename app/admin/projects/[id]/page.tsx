@@ -105,17 +105,21 @@ export default async function ProjectDetailPage({
           >
             <Field
               label="Start date"
-              value={project.startDate ? formatDate(project.startDate) : undefined}
+              value={project.startDate ? formatDate(project.startDate, user.workspaceDateFormat) : undefined}
             />
             <Field
               label="End date"
-              value={project.endDate ? formatDate(project.endDate) : undefined}
+              value={project.endDate ? formatDate(project.endDate, user.workspaceDateFormat) : undefined}
             />
           </dl>
         </Card>
 
         <div style={{ marginTop: "var(--space-6)" }}>
-          <MilestonesSection milestones={milestones} projectId={project.id} />
+          <MilestonesSection
+            milestones={milestones}
+            projectId={project.id}
+            dateFormat={user.workspaceDateFormat}
+          />
         </div>
 
         <div style={{ marginTop: "var(--space-6)" }}>
@@ -127,12 +131,13 @@ export default async function ProjectDetailPage({
               projectId={project.id}
               projectStartDate={project.startDate}
               projectEndDate={project.endDate}
+              dateFormat={user.workspaceDateFormat}
             />
           </Card>
         </div>
 
         <div style={{ marginTop: "var(--space-6)" }}>
-          <TimeEntriesList entries={timeEntries} hideProject />
+          <TimeEntriesList entries={timeEntries} hideProject dateFormat={user.workspaceDateFormat} />
         </div>
       </div>
     </>

@@ -20,7 +20,7 @@ export default async function TeamPage() {
         actions={<AddTeamMemberButton />}
       />
       <div className={styles.content}>
-        <TeamTable members={members} currentUserId={user.id} />
+        <TeamTable members={members} currentUserId={user.id} dateFormat={user.workspaceDateFormat} />
       </div>
     </>
   );

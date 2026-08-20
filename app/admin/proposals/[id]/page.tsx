@@ -79,8 +79,8 @@ export default async function ProposalDetailPage({
             <Field label="Contact" value={proposal.contact?.fullName} />
             <Field label="Template" value={proposal.template?.name} />
             <Field label="Currency" value={proposal.currency} />
-            <Field label="Created" value={formatDate(proposal.createdAt)} />
-            <Field label="Updated" value={formatDate(proposal.updatedAt)} />
+            <Field label="Created" value={formatDate(proposal.createdAt, user.workspaceDateFormat)} />
+            <Field label="Updated" value={formatDate(proposal.updatedAt, user.workspaceDateFormat)} />
           </dl>
 
           {proposal.notes && (

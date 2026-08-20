@@ -165,7 +165,7 @@ export default async function ProductsPage() {
                       </td>
                       <td>{priceBook.description || "—"}</td>
                       <td>{priceBook._count.entries}</td>
-                      <td>{formatDate(priceBook.createdAt)}</td>
+                      <td>{formatDate(priceBook.createdAt, user.workspaceDateFormat)}</td>
                     </TableRow>
                   ))
                 )}

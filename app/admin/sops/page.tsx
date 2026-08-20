@@ -47,7 +47,7 @@ export default async function SopsPage() {
                       {sop.title}
                     </Link>
                   </td>
-                  <td>{formatDate(sop.updatedAt)}</td>
+                  <td>{formatDate(sop.updatedAt, user.workspaceDateFormat)}</td>
                 </TableRow>
               ))
             )}

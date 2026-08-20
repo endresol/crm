@@ -39,6 +39,7 @@ export default async function ProposalsPage() {
             contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, clientId: c.clientId }))}
             templates={templates}
             workspaceName={user.workspaceName}
+            defaultCurrency={user.workspaceCurrency}
           />
         }
       />
@@ -86,8 +87,8 @@ export default async function ProposalsPage() {
                     </Badge>
                   </td>
                   <td>{formatCurrency(proposalTotal(proposal.lineItems), proposal.currency)}</td>
-                  <td>{formatDate(proposal.createdAt)}</td>
-                  <td>{formatDate(proposal.updatedAt)}</td>
+                  <td>{formatDate(proposal.createdAt, user.workspaceDateFormat)}</td>
+                  <td>{formatDate(proposal.updatedAt, user.workspaceDateFormat)}</td>
                 </TableRow>
               ))
             )}

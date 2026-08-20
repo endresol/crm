@@ -37,6 +37,7 @@ export default async function ContractsPage() {
             contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, clientId: c.clientId }))}
             deals={deals.map((d) => ({ id: d.id, name: d.name, clientId: d.clientId }))}
             templates={templates}
+            defaultCurrency={user.workspaceCurrency}
           />
         }
       />
@@ -86,8 +87,8 @@ export default async function ContractsPage() {
                     </Badge>
                   </td>
                   <td>{contract.contractType ?? "—"}</td>
-                  <td>{contract.startDate ? formatDate(contract.startDate) : "—"}</td>
-                  <td>{contract.endDate ? formatDate(contract.endDate) : "—"}</td>
+                  <td>{contract.startDate ? formatDate(contract.startDate, user.workspaceDateFormat) : "—"}</td>
+                  <td>{contract.endDate ? formatDate(contract.endDate, user.workspaceDateFormat) : "—"}</td>
                   <td>
                     {contract.contractValue != null
                       ? formatCurrency(contract.contractValue, contract.currency)

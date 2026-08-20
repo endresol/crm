@@ -15,10 +15,12 @@ type EntryWithContext = TimeEntry & {
 export function TimeEntriesList({
   entries,
   hideProject = false,
+  dateFormat,
 }: {
   entries: EntryWithContext[];
   /** Omit the Project column when every entry is already scoped to one project (e.g. on a Project's own page). */
   hideProject?: boolean;
+  dateFormat: string;
 }) {
   const totalMinutes = entries.reduce((sum, entry) => sum + entry.minutes, 0);
   const columnCount = hideProject ? 7 : 8;
@@ -53,7 +55,7 @@ export function TimeEntriesList({
           ) : (
             entries.map((entry) => (
               <TableRow key={entry.id}>
-                <td>{formatDate(entry.date)}</td>
+                <td>{formatDate(entry.date, dateFormat)}</td>
                 <td>{entry.description || "—"}</td>
                 {!hideProject && <td>{entry.project?.name ?? "—"}</td>}
                 <td>{entry.task?.title ?? "—"}</td>

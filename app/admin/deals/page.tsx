@@ -32,6 +32,8 @@ export default async function DealsPage() {
             fullName: contact.fullName,
             clientId: contact.clientId,
           }))}
+          dateFormat={user.workspaceDateFormat}
+          defaultCurrency={user.workspaceCurrency}
         />
       </div>
     </>

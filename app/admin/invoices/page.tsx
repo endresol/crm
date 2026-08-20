@@ -35,6 +35,7 @@ export default async function InvoicesPage() {
             contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, clientId: c.clientId }))}
             templates={templates}
             workspaceName={user.workspaceName}
+            defaultCurrency={user.workspaceCurrency}
           />
         }
       />
@@ -82,8 +83,8 @@ export default async function InvoicesPage() {
                     </Badge>
                   </td>
                   <td>{formatCurrency(invoiceTotal(invoice.lineItems), invoice.currency)}</td>
-                  <td>{formatDate(invoice.invoiceDate)}</td>
-                  <td>{invoice.dueDate ? formatDate(invoice.dueDate) : "—"}</td>
+                  <td>{formatDate(invoice.invoiceDate, user.workspaceDateFormat)}</td>
+                  <td>{invoice.dueDate ? formatDate(invoice.dueDate, user.workspaceDateFormat) : "—"}</td>
                 </TableRow>
               ))
             )}

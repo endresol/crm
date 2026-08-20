@@ -19,12 +19,14 @@ export function TasksPanel({
   projectId,
   projectStartDate,
   projectEndDate,
+  dateFormat,
 }: {
   tasks: Task[];
   milestones: { id: string; name: string }[];
   projectId: string;
   projectStartDate?: Date | string | null;
   projectEndDate?: Date | string | null;
+  dateFormat: string;
 }) {
   const [view, setView] = useState<View>("board");
   const [editing, setEditing] = useState<Task | "new" | null>(null);
@@ -55,7 +57,7 @@ export function TasksPanel({
       </div>
 
       {view === "board" ? (
-        <TaskBoard tasks={tasks} onTaskClick={setEditing} />
+        <TaskBoard tasks={tasks} onTaskClick={setEditing} dateFormat={dateFormat} />
       ) : (
         <GanttChart
           tasks={tasks}

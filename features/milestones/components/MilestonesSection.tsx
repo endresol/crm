@@ -21,9 +21,11 @@ export type MilestoneWithProgress = {
 export function MilestonesSection({
   milestones,
   projectId,
+  dateFormat,
 }: {
   milestones: MilestoneWithProgress[];
   projectId: string;
+  dateFormat: string;
 }) {
   const [editing, setEditing] = useState<MilestoneWithProgress | "new" | null>(null);
 
@@ -61,7 +63,7 @@ export function MilestonesSection({
                 <div>
                   <div className={styles.name}>{milestone.name}</div>
                   <div className={styles.due}>
-                    {milestone.dueDate ? `Due ${formatDate(milestone.dueDate)}` : "No due date"}
+                    {milestone.dueDate ? `Due ${formatDate(milestone.dueDate, dateFormat)}` : "No due date"}
                   </div>
                 </div>
                 <div className={styles.progressWrap}>

@@ -22,6 +22,10 @@ export function DealForm({
   contacts,
   fixedClientId,
   defaultValues,
+  // Only used when defaultValues.currency is absent — i.e. only affects the
+  // "New deal" form. An edit always keeps whatever currency the deal already
+  // has, same as every other currency-bearing feature in this app.
+  defaultCurrency = "USD",
   submitLabel,
   onSaved,
   onCancel,
@@ -31,6 +35,7 @@ export function DealForm({
   clients?: { id: string; name: string }[];
   contacts: { id: string; fullName: string; clientId: string }[];
   fixedClientId?: string;
+  defaultCurrency?: string;
   defaultValues?: {
     clientId?: string;
     contactId?: string | null;
@@ -131,7 +136,7 @@ export function DealForm({
             name="currency"
             label="Currency"
             optional
-            defaultValue={defaultValues?.currency ?? "USD"}
+            defaultValue={defaultValues?.currency ?? defaultCurrency}
           />
         </div>
 
