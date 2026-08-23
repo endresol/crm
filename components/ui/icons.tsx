@@ -330,6 +330,28 @@ export function ContractIcon(props: IconProps) {
   );
 }
 
+export function QuestionnaireIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        d="M6 2.5h5.5L15 6v10a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 015 16V4A1.5 1.5 0 016 2.5z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M11.5 2.5V6H15" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path
+        d="M8.3 10c0-.9.7-1.6 1.7-1.6s1.7.6 1.7 1.4c0 .7-.4 1-.9 1.3-.5.3-.8.6-.8 1.2"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="14.5" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

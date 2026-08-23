@@ -42,27 +42,29 @@ model Workspace {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  users             User[]
-  clients           Client[]
-  contacts          Contact[]
-  deals             Deal[]
-  leads             Lead[]
-  sops              Sop[]
-  calendarEvents    CalendarEvent[]
-  timeEntries       TimeEntry[]
-  projects          Project[]
-  tasks             Task[]
-  milestones        Milestone[]
-  products          Product[]
-  discounts         Discount[]
-  priceBooks        PriceBook[]
-  priceBookEntries  PriceBookEntry[]
-  documentTemplates DocumentTemplate[]
-  invoices          Invoice[]
-  invoiceLineItems  InvoiceLineItem[]
-  proposals         Proposal[]
-  proposalLineItems ProposalLineItem[]
-  contracts         Contract[]
+  users                  User[]
+  clients                Client[]
+  contacts               Contact[]
+  deals                  Deal[]
+  leads                  Lead[]
+  sops                   Sop[]
+  calendarEvents         CalendarEvent[]
+  timeEntries            TimeEntry[]
+  projects               Project[]
+  tasks                  Task[]
+  milestones             Milestone[]
+  products               Product[]
+  discounts              Discount[]
+  priceBooks             PriceBook[]
+  priceBookEntries       PriceBookEntry[]
+  documentTemplates      DocumentTemplate[]
+  invoices               Invoice[]
+  invoiceLineItems       InvoiceLineItem[]
+  proposals              Proposal[]
+  proposalLineItems      ProposalLineItem[]
+  contracts              Contract[]
+  questionnaires         Questionnaire[]
+  questionnaireQuestions QuestionnaireQuestion[]
 
   @@map("workspaces")
 }
@@ -135,7 +137,7 @@ model Client {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace      Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   timeEntries    TimeEntry[]
   projects       Project[]
   contacts       Contact[]
@@ -144,6 +146,7 @@ model Client {
   invoices       Invoice[]
   proposals      Proposal[]
   contracts      Contract[]
+  questionnaires Questionnaire[]
 
   @@index([workspaceId])
   @@map("clients")
@@ -167,12 +170,13 @@ model Contact {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  deals     Deal[]
-  invoices  Invoice[]
-  proposals Proposal[]
-  contracts Contract[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client         Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deals          Deal[]
+  invoices       Invoice[]
+  proposals      Proposal[]
+  contracts      Contract[]
+  questionnaires Questionnaire[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -566,10 +570,11 @@ model DocumentTemplate {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
 
-  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  invoices  Invoice[]
-  proposals Proposal[]
-  contracts Contract[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invoices       Invoice[]
+  proposals      Proposal[]
+  contracts      Contract[]
+  questionnaires Questionnaire[]
 
   @@index([workspaceId])
   @@index([type])
@@ -760,4 +765,66 @@ model Contract {
   @@index([dealId])
   @@index([templateId])
   @@map("contracts")
+}
+
+enum QuestionnaireStatus {
+  DRAFT
+  SENT
+  COMPLETED
+}
+
+/// A client intake form (roadmap #18) — Q&A-shaped, unlike Proposal/Invoice's
+/// line items or Contract's clause text (see the design note at the top of
+/// docs/roadmap.md). Its DocumentTemplate.content is one question prompt per
+/// line; "fill from template" (features/questionnaires/service.ts) splits
+/// those lines into QuestionnaireQuestion rows rather than copying a single
+/// text blob. No Client Portal yet (roadmap #20), so there's no actual
+/// client-facing submission — `answer` is filled in by staff and `status` is
+/// self-reported, same trimming Contract applies to signatures. See
+/// docs/feature-audit/13-questionnaires.md for the full real-product model.
+model Questionnaire {
+  id          String              @id @default(cuid())
+  workspaceId String
+  clientId    String
+  contactId   String?
+  templateId  String?
+  name        String
+  status      QuestionnaireStatus @default(DRAFT)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  workspace Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client                  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact   Contact?                @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  template  DocumentTemplate?       @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  questions QuestionnaireQuestion[]
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@index([contactId])
+  @@index([templateId])
+  @@map("questionnaires")
+}
+
+/// A question (+ optional answer) on a Questionnaire. Unlike Invoice/Proposal
+/// line items — always added one at a time, so createdAt order is stable —
+/// "fill from template" can insert a whole batch in one statement, where
+/// createdAt alone can't be trusted to preserve line order. `position` makes
+/// that ordering explicit instead.
+model QuestionnaireQuestion {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  questionnaireId String
+  prompt          String
+  answer          String?
+  position        Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  questionnaire Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([questionnaireId])
+  @@map("questionnaire_questions")
 }
