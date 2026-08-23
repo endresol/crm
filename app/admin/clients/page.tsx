@@ -52,7 +52,7 @@ export default async function ClientsPage() {
                         color: "var(--color-text)",
                       }}
                     >
-                      <Avatar name={client.name} size="sm" />
+                      <Avatar name={client.name} imageUrl={client.logoUrl} size="sm" />
                       {client.name}
                     </Link>
                   </td>

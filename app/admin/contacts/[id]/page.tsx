@@ -4,9 +4,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getContact } from "@/features/contacts/service";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card } from "@/components/ui/Card";
-import { Avatar } from "@/components/ui/Avatar";
+import { IMAGE_ACCEPT_ATTR } from "@/lib/uploads";
 import { EditContactButton } from "@/features/contacts/components/EditContactButton";
 import { DeleteContactButton } from "@/features/contacts/components/DeleteContactButton";
+import { ContactAvatarUpload } from "@/features/contacts/components/ContactAvatarUpload";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ContactDetailPage({
@@ -52,7 +53,12 @@ export default async function ContactDetailPage({
               marginBottom: "var(--space-6)",
             }}
           >
-            <Avatar name={contact.fullName} size="lg" />
+            <ContactAvatarUpload
+              contactId={contact.id}
+              contactName={contact.fullName}
+              avatarUrl={contact.avatarUrl}
+              accept={IMAGE_ACCEPT_ATTR}
+            />
             <div>
               <div style={{ fontSize: "var(--text-xl)", fontWeight: 700 }}>
                 {contact.fullName}

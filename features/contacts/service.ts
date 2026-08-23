@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { deleteImage } from "@/lib/uploads";
 import type { ContactInput } from "./schemas";
 
 export function listContacts(workspaceId: string) {
@@ -44,4 +45,26 @@ export async function deleteContact(workspaceId: string, contactId: string) {
     where: { id: contactId, workspaceId },
   });
   return count > 0;
+}
+
+/**
+ * Points the contact at a newly uploaded photo and cleans up the one it
+ * replaces. See features/profile/service.ts:setAvatar for the same pattern.
+ */
+export async function setContactAvatar(
+  workspaceId: string,
+  contactId: string,
+  url: string | null,
+) {
+  const current = await prisma.contact.findFirst({
+    where: { id: contactId, workspaceId },
+    select: { avatarUrl: true },
+  });
+  if (!current) return { ok: false as const, reason: "That contact no longer exists." };
+
+  await prisma.contact.update({ where: { id: contactId }, data: { avatarUrl: url } });
+  if (current.avatarUrl && current.avatarUrl !== url) {
+    await deleteImage(current.avatarUrl);
+  }
+  return { ok: true as const };
 }

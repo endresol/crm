@@ -53,7 +53,7 @@ export default async function TimeTrackingPage() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
-                    <Avatar name={client.name} />
+                    <Avatar name={client.name} imageUrl={client.logoUrl} />
                     <span style={{ fontWeight: 600 }}>{client.name}</span>
                   </div>
                   <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>

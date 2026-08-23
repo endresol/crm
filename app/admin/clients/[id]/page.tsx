@@ -19,8 +19,10 @@ import { Topbar } from "@/components/layout/Topbar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { IMAGE_ACCEPT_ATTR } from "@/lib/uploads";
 import { EditClientButton } from "@/features/clients/components/EditClientButton";
 import { DeleteClientButton } from "@/features/clients/components/DeleteClientButton";
+import { ClientLogoUpload } from "@/features/clients/components/ClientLogoUpload";
 import { LogTimeButton } from "@/features/time-entries/components/LogTimeButton";
 import { TimeEntriesList } from "@/features/time-entries/components/TimeEntriesList";
 import { AddProjectButton } from "@/features/projects/components/AddProjectButton";
@@ -85,7 +87,12 @@ export default async function ClientDetailPage({
               marginBottom: "var(--space-6)",
             }}
           >
-            <Avatar name={client.name} size="lg" />
+            <ClientLogoUpload
+              clientId={client.id}
+              clientName={client.name}
+              logoUrl={client.logoUrl}
+              accept={IMAGE_ACCEPT_ATTR}
+            />
             <div>
               <div style={{ fontSize: "var(--text-xl)", fontWeight: 700 }}>{client.name}</div>
               {client.legalName && (
@@ -175,7 +182,7 @@ export default async function ClientDetailPage({
                     }}
                   >
                     <span style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                      <Avatar name={contact.fullName} size="sm" />
+                      <Avatar name={contact.fullName} imageUrl={contact.avatarUrl} size="sm" />
                       <span style={{ fontWeight: 600 }}>{contact.fullName}</span>
                     </span>
                     <span style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>

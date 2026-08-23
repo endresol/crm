@@ -57,7 +57,7 @@ export default async function ContactsPage() {
                         color: "var(--color-text)",
                       }}
                     >
-                      <Avatar name={contact.fullName} size="sm" />
+                      <Avatar name={contact.fullName} imageUrl={contact.avatarUrl} size="sm" />
                       {contact.fullName}
                     </Link>
                   </td>

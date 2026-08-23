@@ -3,11 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { uploadImage } from "@/lib/uploads";
 import { contactSchema } from "./schemas";
-import { createContact, deleteContact, updateContact } from "./service";
+import { createContact, deleteContact, setContactAvatar, updateContact } from "./service";
 
 export type ContactActionState = {
   error?: string;
+};
+
+export type ContactAvatarActionState = {
+  error?: string;
+  success?: boolean;
 };
 
 function parseContactForm(formData: FormData) {
@@ -70,4 +76,37 @@ export async function deleteContactAction(contactId: string, clientId: string) {
   revalidatePath("/admin/contacts");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect("/admin/contacts");
+}
+
+export async function uploadContactAvatarAction(
+  contactId: string,
+  _prevState: ContactAvatarActionState,
+  formData: FormData,
+): Promise<ContactAvatarActionState> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose an image to upload." };
+  }
+
+  const uploaded = await uploadImage(file, `contact-avatars/${contactId}`);
+  if ("error" in uploaded) return { error: uploaded.error };
+
+  const result = await setContactAvatar(user.workspaceId, contactId, uploaded.url);
+  if (!result.ok) return { error: result.reason };
+
+  revalidatePath("/admin/contacts");
+  revalidatePath(`/admin/contacts/${contactId}`);
+  return { success: true };
+}
+
+export async function removeContactAvatarAction(contactId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  await setContactAvatar(user.workspaceId, contactId, null);
+  revalidatePath("/admin/contacts");
+  revalidatePath(`/admin/contacts/${contactId}`);
 }

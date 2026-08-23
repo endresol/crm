@@ -3,11 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { uploadImage } from "@/lib/uploads";
 import { clientSchema } from "./schemas";
-import { createClient, deleteClient, updateClient } from "./service";
+import { createClient, deleteClient, setClientLogo, updateClient } from "./service";
 
 export type ClientActionState = {
   error?: string;
+};
+
+export type ClientLogoActionState = {
+  error?: string;
+  success?: boolean;
 };
 
 function parseClientForm(formData: FormData) {
@@ -67,4 +73,37 @@ export async function deleteClientAction(clientId: string) {
   await deleteClient(user.workspaceId, clientId);
   revalidatePath("/admin/clients");
   redirect("/admin/clients");
+}
+
+export async function uploadClientLogoAction(
+  clientId: string,
+  _prevState: ClientLogoActionState,
+  formData: FormData,
+): Promise<ClientLogoActionState> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose an image to upload." };
+  }
+
+  const uploaded = await uploadImage(file, `client-logos/${clientId}`);
+  if ("error" in uploaded) return { error: uploaded.error };
+
+  const result = await setClientLogo(user.workspaceId, clientId, uploaded.url);
+  if (!result.ok) return { error: result.reason };
+
+  revalidatePath("/admin/clients");
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { success: true };
+}
+
+export async function removeClientLogoAction(clientId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  await setClientLogo(user.workspaceId, clientId, null);
+  revalidatePath("/admin/clients");
+  revalidatePath(`/admin/clients/${clientId}`);
 }

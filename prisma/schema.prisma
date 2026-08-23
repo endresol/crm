@@ -119,6 +119,10 @@ model Session {
 
 /// A client the workspace does business with. Trimmed field set for now —
 /// see docs/feature-audit/01-clients.md for the full real-product model.
+///
+/// logoUrl is a Vercel Blob public URL (see lib/uploads.ts), same reasoning as
+/// Workspace.logoUrl/User.avatarUrl. Falls back to a generated-initials Avatar
+/// when unset.
 model Client {
   id          String   @id @default(cuid())
   workspaceId String
@@ -127,6 +131,7 @@ model Client {
   email       String?
   website     String?
   industry    String?
+  logoUrl     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -147,6 +152,9 @@ model Client {
 /// A person belonging to a Client (roadmap #1). Trimmed field set for now — no
 /// status/source/type/role/social links yet, those enums weren't observable in
 /// the audit. See docs/feature-audit/02-contacts.md for the full real-product model.
+///
+/// avatarUrl is a Vercel Blob public URL (see lib/uploads.ts), same reasoning as
+/// User.avatarUrl. Falls back to a generated-initials Avatar when unset.
 model Contact {
   id          String   @id @default(cuid())
   workspaceId String
@@ -155,6 +163,7 @@ model Contact {
   jobTitle    String?
   email       String?
   phone       String?
+  avatarUrl   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

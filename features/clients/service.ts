@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { deleteImage } from "@/lib/uploads";
 import type { ClientInput } from "./schemas";
 
 export function listClients(workspaceId: string) {
@@ -35,4 +36,22 @@ export async function deleteClient(workspaceId: string, clientId: string) {
     where: { id: clientId, workspaceId },
   });
   return count > 0;
+}
+
+/**
+ * Points the client at a newly uploaded logo and cleans up the one it
+ * replaces. See features/profile/service.ts:setAvatar for the same pattern.
+ */
+export async function setClientLogo(workspaceId: string, clientId: string, url: string | null) {
+  const current = await prisma.client.findFirst({
+    where: { id: clientId, workspaceId },
+    select: { logoUrl: true },
+  });
+  if (!current) return { ok: false as const, reason: "That client no longer exists." };
+
+  await prisma.client.update({ where: { id: clientId }, data: { logoUrl: url } });
+  if (current.logoUrl && current.logoUrl !== url) {
+    await deleteImage(current.logoUrl);
+  }
+  return { ok: true as const };
 }
