@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Client Portal">
+  <!--
+    Client Portal's tab icon — same mark and construction as app/icon.svg
+    (see that file's comment for why it's a stroked arc, not text), but a
+    cooler, teal-leaning green rather than the admin app's olive brand green.
+    Deliberate: the portal is a different login surface from a different
+    domain (see proxy.ts's PORTAL_HOST) — a matching favicon in two open tabs
+    would make it easy to act on the wrong one.
+  -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4fb0a0"/>
+      <stop offset="1" stop-color="#215c52"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#tile)"/>
+  <path d="M43.5 22a15 15 0 1 0 0 20" fill="none" stroke="#fff" stroke-width="10.5" stroke-linecap="round"/>
+</svg>

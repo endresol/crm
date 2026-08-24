@@ -32,7 +32,13 @@ export default function proxy(request: NextRequest) {
 
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const isAdminPage = pathname.startsWith("/admin");
-  const isPortalPage = pathname.startsWith("/portal");
+  // Next.js serves file-based metadata (app/portal/icon.svg) as a route at
+  // that same path — /portal/:path* below would otherwise auth-gate the
+  // portal's own favicon request and redirect it to the login page, which a
+  // browser tab does surface (as no icon at all, since it can't follow a
+  // redirect the same way a real navigation would).
+  const isPortalAsset = pathname === "/portal/icon.svg" || pathname === "/portal/apple-icon.png";
+  const isPortalPage = pathname.startsWith("/portal") && !isPortalAsset;
   const isPortalLoginPage = pathname === "/portal/login";
 
   // Domain separation (roadmap #20): in production, PORTAL_HOST is set to
