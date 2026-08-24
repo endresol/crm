@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GridIcon, BriefcaseIcon, QuestionnaireIcon, LogOutIcon } from "@/components/ui/icons";
+import { GridIcon, BriefcaseIcon, MeetingIcon, QuestionnaireIcon, LogOutIcon } from "@/components/ui/icons";
 // Reuses Sidebar's CSS module rather than writing a parallel one — the nav
 // item/logo/footer classes are already generic layout primitives, not
 // admin-specific, and the Client Portal should look like the same product.
@@ -15,6 +15,11 @@ const NAV_ITEMS = [
     href: "/portal/questionnaires",
     label: "Questionnaires",
     icon: (p: { className?: string }) => <QuestionnaireIcon {...p} />,
+  },
+  {
+    href: "/portal/meetings",
+    label: "Meetings",
+    icon: (p: { className?: string }) => <MeetingIcon {...p} />,
   },
 ];
 

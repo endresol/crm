@@ -2,12 +2,29 @@ import { NextResponse, type NextRequest } from "next/server";
 import { PORTAL_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
 // Cheap redirect based on cookie *presence* only (no DB round trip on every
-// navigation) — avoids rendering protected/auth pages when we already know
-// which way the redirect should go. The authoritative check (is the session
-// row still valid?) happens in app/admin/layout.tsx and app/portal/(app)/
+// navigation) — avoids rendering protected pages when we already know a
+// visitor has no session at all. The authoritative check (is the session row
+// still valid?) happens in app/admin/layout.tsx and app/portal/(app)/
 // layout.tsx via getCurrentUser()/getCurrentContact(). (proxy.ts always runs
 // on the Node.js runtime as of Next.js 16, so a DB call here would work fine
 // too — this split is a perf/clarity choice, not a runtime constraint.)
+//
+// Deliberately one-directional: this only ever redirects *out of* a
+// protected area when a cookie is missing, never *into* the dashboard from a
+// login page just because a cookie is present. That second direction used to
+// exist here too, and it's an infinite-redirect trap waiting to happen — a
+// cookie can be present but stale (its session row deleted, e.g. by
+// features/contacts/service.ts's setContactPortalPassword revoking a
+// disabled Contact's portal sessions without clearing their browser's
+// cookie). A stale cookie makes this middleware wave the request straight
+// through past a bare presence check, but the destination page's own
+// authoritative getCurrentUser()/getCurrentContact() call then finds no
+// valid session and redirects back to login — which this middleware would
+// then bounce right back to the destination, forever. Bouncing an
+// already-logged-in visitor away from /login or /portal/login is instead
+// each login page's own job (it already has to call getCurrentUser()/
+// getCurrentContact() to render anything), where the check is authoritative
+// and a stale cookie safely just shows the login form instead of looping.
 export default function proxy(request: NextRequest) {
   const hasSessionCookie = request.cookies.has(SESSION_COOKIE_NAME);
   const hasPortalCookie = request.cookies.has(PORTAL_SESSION_COOKIE_NAME);
@@ -45,16 +62,8 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthPage && hasSessionCookie) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-  }
-
   if (isPortalPage && !isPortalLoginPage && !hasPortalCookie) {
     return NextResponse.redirect(new URL("/portal/login", request.url));
-  }
-
-  if (isPortalLoginPage && hasPortalCookie) {
-    return NextResponse.redirect(new URL("/portal/dashboard", request.url));
   }
 
   return NextResponse.next();

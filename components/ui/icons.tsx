@@ -132,6 +132,18 @@ export function CalendarIcon(props: IconProps) {
   );
 }
 
+export function MeetingIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="4.5" width="14" height="12.5" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 8.5h14" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 2.5v3M13.5 2.5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="11.5" cy="12.5" r="3" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M11.5 11v1.5l1 0.75" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SettingsIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

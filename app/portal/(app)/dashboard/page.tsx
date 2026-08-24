@@ -4,7 +4,9 @@ import { getCurrentContact } from "@/lib/auth/portal-session";
 import { listProjectsForClient } from "@/features/projects/service";
 import { listQuestionnairesForContact } from "@/features/questionnaires/service";
 import { questionnaireProgress } from "@/features/questionnaires/constants";
+import { listMeetingsForContact } from "@/features/meetings/service";
 import { PROJECT_STATUS_BADGE_VARIANT, PROJECT_STATUS_LABELS } from "@/features/projects/constants";
+import { formatDateTime } from "@/lib/format";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -14,12 +16,16 @@ export default async function PortalDashboardPage() {
   const contact = await getCurrentContact();
   if (!contact) redirect("/portal/login");
 
-  const [projects, questionnaires] = await Promise.all([
+  const [projects, questionnaires, meetings] = await Promise.all([
     listProjectsForClient(contact.workspaceId, contact.clientId),
     listQuestionnairesForContact(contact.workspaceId, contact.clientId),
+    listMeetingsForContact(contact.workspaceId, contact.id),
   ]);
 
   const openQuestionnaires = questionnaires.filter((q) => q.status !== "COMPLETED");
+  const upcomingMeetings = meetings.filter(
+    (m) => m.status === "CONFIRMED" && new Date(m.startAt) > new Date(),
+  );
 
   return (
     <>
@@ -35,6 +41,7 @@ export default async function PortalDashboardPage() {
         >
           <StatTile label="Projects" value={projects.length} />
           <StatTile label="Open questionnaires" value={openQuestionnaires.length} />
+          <StatTile label="Upcoming meetings" value={upcomingMeetings.length} />
         </div>
 
         <Card>
@@ -115,6 +122,49 @@ export default async function PortalDashboardPage() {
                     </Link>
                   );
                 })}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <Card>
+            <CardHeader
+              title="Meetings"
+              subtitle={`${upcomingMeetings.length} upcoming`}
+              action={
+                <Link href="/portal/meetings" style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>
+                  Request a meeting
+                </Link>
+              }
+            />
+            {upcomingMeetings.length === 0 ? (
+              <p style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                Nothing on the books.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                {upcomingMeetings.slice(0, 5).map((meeting) => (
+                  <div
+                    key={meeting.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "var(--space-3) var(--space-4)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>{meeting.scheduleName}</span>
+                    <span style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)" }}>
+                      {formatDateTime(meeting.startAt, {
+                        pattern: contact.workspaceDateFormat,
+                        timeZone: contact.workspaceTimezone,
+                      })}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </Card>

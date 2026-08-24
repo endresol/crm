@@ -18,6 +18,7 @@ import {
   InvoiceIcon,
   LeadIcon,
   LogOutIcon,
+  MeetingIcon,
   PeopleIcon,
   ProposalIcon,
   QuestionnaireIcon,
@@ -64,6 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/time-tracking", label: "Time Tracking", icon: (p) => <ClockIcon {...p} /> },
       { href: "/admin/sops", label: "SOPs", icon: (p) => <DocumentIcon {...p} /> },
       { href: "/admin/calendar", label: "Calendar", icon: (p) => <CalendarIcon {...p} /> },
+      { href: "/admin/meetings", label: "Meetings", icon: (p) => <MeetingIcon {...p} /> },
     ],
   },
   {

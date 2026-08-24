@@ -6,7 +6,7 @@ Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client),
 **Milestones** (#11), **Gantt chart view** (#12),
 **Upgrade Time Tracking to log against Project/Task** (#13), **Document Templates system** (#14),
 **Invoices** (#15), **Proposals** (#16), **Contracts** (#17), **Questionnaires** (#18),
-**Client Portal** (#20).
+**Client Portal** (#20), **Meeting Scheduler** (#19).
 
 `DocumentTemplate` is a single shared model (type: PROPOSAL/CONTRACT/INVOICE/QUESTIONNAIRE) with
 `{{merge.field}}` tokens (features/document-templates/mergeFields.ts) resolved against a Client/
@@ -29,12 +29,32 @@ notices/iframes (Meetings needs #19 anyway), and no Invoice/Proposal/Contract vi
 (natural follow-up). Domain separation (client.<yourdomain> vs. the admin app) is env-var-gated in
 proxy.ts (PORTAL_HOST) — unset in local dev/previews so it stays testable without DNS.
 
+Meeting Scheduler (#19) is a Calendly-style booking system: MeetingSchedule (a bookable meeting
+type, workspace-owned rather than per-staff-member — this app has no staff working-hours model to
+hang per-user availability off of), AvailabilityRule (a flat recurring weekly schedule, in
+Workspace.timezone), and Meeting (a booked instance, attributed to a Contact when booked from the
+Client Portal or fully anonymous when booked from the public page). Built with two entry points
+from day one, as asked: the Client Portal's "Request a meeting" (roadmap #20's Meetings page) and a
+public, unauthenticated `/book/[slug]` page meant to be linked or `<iframe>`-embedded from the
+agency's own external website — both share the same slot-computation service
+(features/meetings/slots.ts) and booking form (BookingFlow), differing only in whether the booker
+is an already-known Contact or a guest typing their own name/email. Slot math is real wall-clock
+IANA timezone arithmetic (lib/timezone.ts), not a shortcut — a booking page showing the wrong time
+is a client showing up to the wrong slot, not a cosmetic bug. Trimmed: no e-signature-style
+confirmation email (no outbound email in this clone, same as everywhere else), no per-slot video
+link, and no date-range availability overrides (only the flat weekly rule set).
+
+While testing this, found and fixed a real bug in proxy.ts predating this feature: bouncing an
+already-logged-in visitor away from /login (or /portal/login) based on cookie *presence* could
+infinite-loop when the cookie was stale — e.g. an admin disabling a Contact's portal access (which
+revokes their PortalSession rows) without also being able to clear that Contact's own browser
+cookie. That bounce now lives in each login page itself, using the same authoritative
+getCurrentUser()/getCurrentContact() check the page needed anyway — see proxy.ts's comment.
+
 Everything below this line is *not yet built*.
 
 Pick items in whatever order you like — just respect the "Requires" line. Items with no "Requires" line have no dependency on anything in this list and can be built anytime.
 
-19. **Meeting Scheduler** — Calendly-style public booking pages.
-    Requires: **Calendar** (#4)
 21. **Email templates** — customizable transactional emails (invoice sent/overdue, proposal sent, etc.).
     Requires: the document type they're for (#15–18)
 22. **Integrations** — Google/Outlook calendar sync, payment gateways (Stripe/PayPal/etc.).

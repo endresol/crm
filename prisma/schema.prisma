@@ -65,6 +65,8 @@ model Workspace {
   contracts              Contract[]
   questionnaires         Questionnaire[]
   questionnaireQuestions QuestionnaireQuestion[]
+  meetingSchedules       MeetingSchedule[]
+  meetings               Meeting[]
 
   @@map("workspaces")
 }
@@ -147,6 +149,7 @@ model Client {
   proposals      Proposal[]
   contracts      Contract[]
   questionnaires Questionnaire[]
+  meetings       Meeting[]
 
   @@index([workspaceId])
   @@map("clients")
@@ -189,6 +192,7 @@ model Contact {
   contracts      Contract[]
   questionnaires Questionnaire[]
   portalSessions PortalSession[]
+  meetings       Meeting[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -857,4 +861,107 @@ model QuestionnaireQuestion {
   @@index([workspaceId])
   @@index([questionnaireId])
   @@map("questionnaire_questions")
+}
+
+/// A bookable meeting type (roadmap #19) — Calendly-style. Trimmed from the
+/// full audit (docs/feature-audit/04-calendar.md): a schedule belongs to the
+/// Workspace, not a specific User — there's no staff-level working-hours
+/// model elsewhere in this app either, so "who the meeting is with" isn't
+/// tracked, and a workspace's team shares one set of schedules. Availability
+/// is a flat weekly recurring rule set (AvailabilityRule) rather than the
+/// real product's fuller wizard (date-range overrides, multiple calendars) —
+/// buffer/notice/advance are the three extra settings that *are* modeled
+/// (lib/scheduling.ts), since without them the booking page could offer a
+/// slot starting one minute from now, or stack meetings back-to-back with no
+/// breathing room. `slug` is the public booking URL's path segment
+/// (/book/[slug]) — see roadmap.md on why that route exists outside both
+/// /admin and /portal.
+model MeetingSchedule {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  name            String
+  slug            String   @unique
+  description     String?
+  durationMinutes Int      @default(30)
+  bufferMinutes   Int      @default(0)
+  minNoticeHours  Int      @default(4)
+  maxAdvanceDays  Int      @default(30)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  availabilityRules AvailabilityRule[]
+  meetings          Meeting[]
+
+  @@index([workspaceId])
+  @@map("meeting_schedules")
+}
+
+/// A recurring weekly availability window for a MeetingSchedule, in the
+/// Workspace's timezone (Workspace.timezone) — dayOfWeek 0=Sunday..6=Saturday,
+/// start/endMinute are minutes-from-midnight *local wall-clock* time (e.g. 9am
+/// = 540). Converted to UTC instants at slot-generation time
+/// (lib/scheduling.ts), not stored as UTC, since a fixed UTC offset would
+/// drift across DST transitions — "every Monday 9am" should stay 9am
+/// year-round, not 9am-until-the-clocks-change.
+model AvailabilityRule {
+  id                String @id @default(cuid())
+  meetingScheduleId String
+  dayOfWeek         Int
+  startMinute       Int
+  endMinute         Int
+
+  meetingSchedule MeetingSchedule @relation(fields: [meetingScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([meetingScheduleId])
+  @@map("availability_rules")
+}
+
+enum MeetingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+/// A booked instance of a MeetingSchedule (roadmap #19). Bookable from the
+/// Client Portal (clientId/contactId set, booker fields copied from the
+/// Contact at booking time) or the public embeddable page at /book/[slug]
+/// (clientId/contactId null, booker fields are whatever the guest typed) —
+/// booker name/email are always stored either way so admin-side display
+/// never needs a conditional join just to show who's coming. status is
+/// self-reported (no real video-call link or calendar sync) — same trimming
+/// every other document-ish model in this app applies.
+///
+/// scheduleName is copied from MeetingSchedule.name at booking time (same
+/// "copy at add-time" reasoning as InvoiceLineItem.description), and
+/// meetingScheduleId is nullable with onDelete: SetNull rather than Cascade
+/// — a MeetingSchedule is a bookable *type*, like DocumentTemplate, and
+/// deleting one shouldn't erase the calendar history of meetings that
+/// already happened under it.
+model Meeting {
+  id                String        @id @default(cuid())
+  workspaceId       String
+  meetingScheduleId String?
+  scheduleName      String
+  clientId          String?
+  contactId         String?
+  bookerName        String
+  bookerEmail       String
+  startAt           DateTime
+  endAt             DateTime
+  status            MeetingStatus @default(CONFIRMED)
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  meetingSchedule MeetingSchedule? @relation(fields: [meetingScheduleId], references: [id], onDelete: SetNull)
+  client          Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  contact         Contact?         @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([meetingScheduleId])
+  @@index([clientId])
+  @@index([contactId])
+  @@map("meetings")
 }

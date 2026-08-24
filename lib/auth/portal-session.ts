@@ -20,6 +20,7 @@ export type SessionContact = {
   workspaceBackgroundColor: string;
   workspaceAccentColor: string;
   workspaceDateFormat: string;
+  workspaceTimezone: string;
 };
 
 /** Creates a DB-backed portal session for `contactId` and sets the httpOnly cookie. */
@@ -76,6 +77,7 @@ export async function getCurrentContact(): Promise<SessionContact | null> {
     workspaceBackgroundColor: contact.workspace.backgroundColor,
     workspaceAccentColor: contact.workspace.accentColor,
     workspaceDateFormat: contact.workspace.dateFormat,
+    workspaceTimezone: contact.workspace.timezone,
   };
 }
 
