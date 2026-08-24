@@ -25,3 +25,9 @@ export const contactSchema = z.object({
 });
 
 export type ContactInput = z.infer<typeof contactSchema>;
+
+export const contactPortalPasswordSchema = z.object({
+  password: z.string().min(8, "Use at least 8 characters."),
+});
+
+export type ContactPortalPasswordInput = z.infer<typeof contactPortalPasswordSchema>;

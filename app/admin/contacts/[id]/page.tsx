@@ -1,13 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getContact } from "@/features/contacts/service";
+import { getContact, hasPortalAccess } from "@/features/contacts/service";
 import { Topbar } from "@/components/layout/Topbar";
-import { Card } from "@/components/ui/Card";
+import { Card, CardHeader } from "@/components/ui/Card";
 import { IMAGE_ACCEPT_ATTR } from "@/lib/uploads";
 import { EditContactButton } from "@/features/contacts/components/EditContactButton";
 import { DeleteContactButton } from "@/features/contacts/components/DeleteContactButton";
 import { ContactAvatarUpload } from "@/features/contacts/components/ContactAvatarUpload";
+import { PortalAccessCard } from "@/features/contacts/components/PortalAccessCard";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ContactDetailPage({
@@ -21,6 +22,8 @@ export default async function ContactDetailPage({
   const { id } = await params;
   const contact = await getContact(user.workspaceId, id);
   if (!contact) notFound();
+
+  const portalEnabled = await hasPortalAccess(user.workspaceId, contact.id);
 
   return (
     <>
@@ -87,6 +90,20 @@ export default async function ContactDetailPage({
             />
           </dl>
         </Card>
+
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <Card>
+            <CardHeader
+              title="Client Portal"
+              subtitle="Lets this contact sign in to see their projects and questionnaires."
+            />
+            <PortalAccessCard
+              contactId={contact.id}
+              hasPortalAccess={portalEnabled}
+              hasEmail={Boolean(contact.email)}
+            />
+          </Card>
+        </div>
       </div>
     </>
   );

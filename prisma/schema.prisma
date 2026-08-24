@@ -158,17 +158,28 @@ model Client {
 ///
 /// avatarUrl is a Vercel Blob public URL (see lib/uploads.ts), same reasoning as
 /// User.avatarUrl. Falls back to a generated-initials Avatar when unset.
+///
+/// portalPasswordHash is roadmap #20 (Client Portal): a Contact doubles as the
+/// portal's login principal, kept separate from User (see User's doc comment)
+/// rather than a shared accounts table. Null means no portal access; the real
+/// product activates a whole Client's portal and invites contacts by email —
+/// trimmed here to the admin setting a password on a Contact directly (Set
+/// Contact/actions.ts), since this clone has no outbound email to send an
+/// invite through (same reasoning as Contract's self-reported status). email
+/// is `@unique` so portal login can look a Contact up by email alone, same as
+/// User.email — meaning, like User, two workspaces can't share a contact email.
 model Contact {
-  id          String   @id @default(cuid())
-  workspaceId String
-  clientId    String
-  fullName    String
-  jobTitle    String?
-  email       String?
-  phone       String?
-  avatarUrl   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  workspaceId        String
+  clientId           String
+  fullName           String
+  jobTitle           String?
+  email              String?  @unique
+  phone              String?
+  avatarUrl          String?
+  portalPasswordHash String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   client         Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -177,10 +188,29 @@ model Contact {
   proposals      Proposal[]
   contracts      Contract[]
   questionnaires Questionnaire[]
+  portalSessions PortalSession[]
 
   @@index([workspaceId])
   @@index([clientId])
   @@map("contacts")
+}
+
+/// A Client Portal (roadmap #20) session — the Contact-principal analog of
+/// Session. Kept as its own table rather than adding a nullable contactId to
+/// Session: mixing two different principal types in one table (with userId
+/// XOR contactId) invites the class of bug where a check for one forgets the
+/// other, and PortalSession's cookie (see lib/auth/portal-session.ts) is
+/// already a separate name specifically so the two can never be confused.
+model PortalSession {
+  id        String   @id @default(cuid())
+  contactId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+  @@map("portal_sessions")
 }
 
 /// Matches the real product's kanban lane set (see docs/feature-audit/03-deals.md).

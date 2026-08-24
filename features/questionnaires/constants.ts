@@ -17,3 +17,9 @@ export const QUESTIONNAIRE_STATUS_BADGE_VARIANT: Record<
   SENT: "info",
   COMPLETED: "success",
 };
+
+/** "3 of 5 answered" — used on both the admin list and the Client Portal. */
+export function questionnaireProgress(questions: { answer: string | null }[]) {
+  const answered = questions.filter((q) => q.answer).length;
+  return { answered, total: questions.length };
+}

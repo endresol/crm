@@ -28,3 +28,17 @@ export const questionnaireQuestionSchema = z.object({
 });
 
 export type QuestionnaireQuestionInput = z.infer<typeof questionnaireQuestionSchema>;
+
+// Transforms blank to `null`, not `undefined` like optionalText above —
+// deliberately, so a Contact can clear an answer they'd already given.
+// `undefined` on a Prisma update `data` field means "leave it alone," which
+// would make clearing silently no-op.
+export const portalAnswerSchema = z.object({
+  answer: z
+    .string()
+    .trim()
+    .max(5000)
+    .transform((value) => (value ? value : null)),
+});
+
+export type PortalAnswerInput = z.infer<typeof portalAnswerSchema>;

@@ -26,7 +26,12 @@ function parseInvoiceForm(formData: FormData) {
   return invoiceSchema.safeParse({
     clientId: formData.get("clientId"),
     contactId: formData.get("contactId"),
-    templateId: formData.get("templateId"),
+    // `?? ""`: the Template <select> isn't rendered at all when there are no
+    // templates of this type yet, so formData.get returns null rather than
+    // "" — and the schema's optionalText only tolerates undefined/"", not
+    // null (null fails z.string()'s own type check before .optional() ever
+    // gets a say). Same fix applied to Contract/Proposal/Questionnaire.
+    templateId: formData.get("templateId") ?? "",
     name: formData.get("name"),
     billingType: formData.get("billingType") || "ONE_TIME",
     status: formData.get("status") || "DRAFT",

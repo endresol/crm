@@ -3,15 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { hashPassword } from "@/lib/auth/password";
 import { uploadImage } from "@/lib/uploads";
-import { contactSchema } from "./schemas";
-import { createContact, deleteContact, setContactAvatar, updateContact } from "./service";
+import { contactPortalPasswordSchema, contactSchema } from "./schemas";
+import {
+  createContact,
+  deleteContact,
+  setContactAvatar,
+  setContactPortalPassword,
+  updateContact,
+} from "./service";
 
 export type ContactActionState = {
   error?: string;
 };
 
 export type ContactAvatarActionState = {
+  error?: string;
+  success?: boolean;
+};
+
+export type ContactPortalActionState = {
   error?: string;
   success?: boolean;
 };
@@ -108,5 +120,38 @@ export async function removeContactAvatarAction(contactId: string): Promise<void
 
   await setContactAvatar(user.workspaceId, contactId, null);
   revalidatePath("/admin/contacts");
+  revalidatePath(`/admin/contacts/${contactId}`);
+}
+
+function parsePortalPasswordForm(formData: FormData) {
+  return contactPortalPasswordSchema.safeParse({ password: formData.get("password") });
+}
+
+export async function setPortalPasswordAction(
+  contactId: string,
+  _prevState: ContactPortalActionState,
+  formData: FormData,
+): Promise<ContactPortalActionState> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const parsed = parsePortalPasswordForm(formData);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
+  }
+
+  const passwordHash = await hashPassword(parsed.data.password);
+  const result = await setContactPortalPassword(user.workspaceId, contactId, passwordHash);
+  if (!result.ok) return { error: result.reason };
+
+  revalidatePath(`/admin/contacts/${contactId}`);
+  return { success: true };
+}
+
+export async function disablePortalAccessAction(contactId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  await setContactPortalPassword(user.workspaceId, contactId, null);
   revalidatePath(`/admin/contacts/${contactId}`);
 }

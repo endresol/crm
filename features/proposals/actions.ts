@@ -26,7 +26,8 @@ function parseProposalForm(formData: FormData) {
   return proposalSchema.safeParse({
     clientId: formData.get("clientId"),
     contactId: formData.get("contactId"),
-    templateId: formData.get("templateId"),
+    // See the comment on this same line in features/invoices/actions.ts.
+    templateId: formData.get("templateId") ?? "",
     name: formData.get("name"),
     status: formData.get("status") || "DRAFT",
     currency: formData.get("currency"),
