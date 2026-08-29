@@ -113,3 +113,22 @@ export function formatMonthShort(value: Date): string {
 export function formatCurrency(value: number, currency: string = "USD"): string {
   return new Intl.NumberFormat(LOCALE, { style: "currency", currency }).format(value);
 }
+
+/** "just now" / "5m ago" / "3h ago" / "2d ago", falling back to formatDate
+ * past a week out — elapsed wall-clock duration, so (unlike formatDate/
+ * formatDateTime) there's no timezone to pass in. Used by the activity feed
+ * (features/activity), where "when" matters more than "what date". */
+export function formatRelativeTime(value: Date | string | null | undefined): string {
+  if (!value) return "—";
+  const date = typeof value === "string" ? new Date(value) : value;
+  const seconds = Math.round((Date.now() - date.getTime()) / 1000);
+
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return formatDate(date);
+}

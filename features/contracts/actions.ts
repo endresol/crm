@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity, statusChangeAction } from "@/features/activity/service";
 import { contractContentSchema, contractSchema } from "./schemas";
+import { CONTRACT_STATUS_LABELS } from "./constants";
 import { createContract, deleteContract, updateContract, updateContractContent } from "./service";
 
 export type ContractActionState = {
@@ -45,6 +47,14 @@ export async function createContractAction(
   }
 
   const contract = await createContract(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "CONTRACT",
+    action: `created Contract ${contract.name}`,
+    url: `/admin/contracts/${contract.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/contracts");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   redirect(`/admin/contracts/${contract.id}`);
@@ -68,6 +78,20 @@ export async function updateContractAction(
     return { error: "That contract no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "CONTRACT",
+    action:
+      statusChangeAction(
+        updated.previousStatus,
+        parsed.data.status,
+        `Contract ${parsed.data.name}`,
+        CONTRACT_STATUS_LABELS,
+      ) ?? `updated Contract ${parsed.data.name}`,
+    url: `/admin/contracts/${contractId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/contracts");
   revalidatePath(`/admin/contracts/${contractId}`);
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
@@ -78,7 +102,16 @@ export async function deleteContractAction(contractId: string, clientId: string)
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteContract(user.workspaceId, contractId);
+  const deleted = await deleteContract(user.workspaceId, contractId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "CONTRACT",
+      action: `deleted Contract ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/contracts");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect("/admin/contracts");

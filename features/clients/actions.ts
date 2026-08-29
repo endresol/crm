@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { uploadImage } from "@/lib/uploads";
+import { recordActivity } from "@/features/activity/service";
 import { clientSchema } from "./schemas";
 import { createClient, deleteClient, setClientLogo, updateClient } from "./service";
 
@@ -39,6 +40,14 @@ export async function createClientAction(
   }
 
   const client = await createClient(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "CLIENT",
+    action: `created Client ${client.name}`,
+    url: `/admin/clients/${client.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/clients");
   redirect(`/admin/clients/${client.id}`);
 }
@@ -61,6 +70,14 @@ export async function updateClientAction(
     return { error: "That client no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "CLIENT",
+    action: `updated Client ${parsed.data.name}`,
+    url: `/admin/clients/${clientId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/clients");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect(`/admin/clients/${clientId}`);
@@ -70,7 +87,16 @@ export async function deleteClientAction(clientId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteClient(user.workspaceId, clientId);
+  const deleted = await deleteClient(user.workspaceId, clientId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "CLIENT",
+      action: `deleted Client ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/clients");
   redirect("/admin/clients");
 }

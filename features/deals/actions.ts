@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity, statusChangeAction } from "@/features/activity/service";
 import { dealSchema } from "./schemas";
+import { DEAL_STAGE_LABELS } from "./constants";
 import { createDeal, deleteDeal, updateDeal } from "./service";
 
 export type DealActionState = {
@@ -38,7 +40,15 @@ export async function createDealAction(
     return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
-  await createDeal(user.workspaceId, parsed.data);
+  const deal = await createDeal(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "DEAL",
+    action: `created Deal ${deal.name}`,
+    url: "/admin/deals",
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/deals");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   return { success: true };
@@ -62,6 +72,21 @@ export async function updateDealAction(
     return { error: "That deal no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "DEAL",
+    action:
+      statusChangeAction(
+        updated.previousStage,
+        parsed.data.stage,
+        `Deal ${parsed.data.name}`,
+        DEAL_STAGE_LABELS,
+        { verb: "moved", preposition: "to" },
+      ) ?? `updated Deal ${parsed.data.name}`,
+    url: "/admin/deals",
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/deals");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   return { success: true };
@@ -71,7 +96,16 @@ export async function deleteDealAction(dealId: string, clientId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteDeal(user.workspaceId, dealId);
+  const deleted = await deleteDeal(user.workspaceId, dealId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "DEAL",
+      action: `deleted Deal ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/deals");
   revalidatePath(`/admin/clients/${clientId}`);
 }

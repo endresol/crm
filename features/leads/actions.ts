@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity, statusChangeAction } from "@/features/activity/service";
 import { leadSchema } from "./schemas";
+import { LEAD_STATUS_LABELS } from "./constants";
 import { convertLeadToClient, createLead, deleteLead, updateLead } from "./service";
 
 export type LeadActionState = {
@@ -37,7 +39,15 @@ export async function createLeadAction(
     return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
-  await createLead(user.workspaceId, parsed.data);
+  const lead = await createLead(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "LEAD",
+    action: `created Lead ${lead.name}`,
+    url: "/admin/leads",
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/leads");
   return { success: true };
 }
@@ -60,6 +70,20 @@ export async function updateLeadAction(
     return { error: "That lead no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "LEAD",
+    action:
+      statusChangeAction(
+        updated.previousStatus,
+        parsed.data.status,
+        `Lead ${parsed.data.name}`,
+        LEAD_STATUS_LABELS,
+      ) ?? `updated Lead ${parsed.data.name}`,
+    url: "/admin/leads",
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/leads");
   return { success: true };
 }
@@ -68,7 +92,16 @@ export async function deleteLeadAction(leadId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteLead(user.workspaceId, leadId);
+  const deleted = await deleteLead(user.workspaceId, leadId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "LEAD",
+      action: `deleted Lead ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/leads");
 }
 
@@ -76,10 +109,18 @@ export async function convertLeadAction(leadId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const client = await convertLeadToClient(user.workspaceId, leadId);
-  if (!client) redirect("/admin/leads");
+  const result = await convertLeadToClient(user.workspaceId, leadId);
+  if (!result) redirect("/admin/leads");
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "LEAD",
+    action: `converted Lead ${result.leadName} to Client ${result.client.name}`,
+    url: `/admin/clients/${result.client.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/leads");
   revalidatePath("/admin/clients");
-  redirect(`/admin/clients/${client.id}`);
+  redirect(`/admin/clients/${result.client.id}`);
 }

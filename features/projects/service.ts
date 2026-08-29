@@ -42,17 +42,28 @@ export function createProject(workspaceId: string, input: ProjectInput) {
   });
 }
 
+/** Returns the pre-update status (for the activity log's "marked as X" vs.
+ * plain "updated" phrasing — see statusChangeAction) or null if not found. */
 export async function updateProject(workspaceId: string, projectId: string, input: ProjectInput) {
-  const { count } = await prisma.project.updateMany({
+  const before = await prisma.project.findFirst({
     where: { id: projectId, workspaceId },
-    data: toData(input),
+    select: { status: true },
   });
-  return count > 0;
+  if (!before) return null;
+
+  await prisma.project.update({ where: { id: projectId }, data: toData(input) });
+  return { previousStatus: before.status };
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteProject(workspaceId: string, projectId: string) {
-  const { count } = await prisma.project.deleteMany({
+  const project = await prisma.project.findFirst({
     where: { id: projectId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!project) return null;
+
+  await prisma.project.delete({ where: { id: projectId } });
+  return project;
 }

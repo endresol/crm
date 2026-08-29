@@ -51,9 +51,15 @@ export async function updateMilestone(
   return count > 0;
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteMilestone(workspaceId: string, milestoneId: string) {
-  const { count } = await prisma.milestone.deleteMany({
+  const milestone = await prisma.milestone.findFirst({
     where: { id: milestoneId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!milestone) return null;
+
+  await prisma.milestone.delete({ where: { id: milestoneId } });
+  return milestone;
 }

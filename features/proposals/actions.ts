@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity, statusChangeAction } from "@/features/activity/service";
 import { proposalSchema, proposalLineItemSchema } from "./schemas";
+import { PROPOSAL_STATUS_LABELS } from "./constants";
 import {
   addLineItem,
   createProposal,
@@ -48,6 +50,14 @@ export async function createProposalAction(
   }
 
   const proposal = await createProposal(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "PROPOSAL",
+    action: `created Proposal ${proposal.name}`,
+    url: `/admin/proposals/${proposal.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/proposals");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   redirect(`/admin/proposals/${proposal.id}`);
@@ -71,6 +81,20 @@ export async function updateProposalAction(
     return { error: "That proposal no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "PROPOSAL",
+    action:
+      statusChangeAction(
+        updated.previousStatus,
+        parsed.data.status,
+        `Proposal ${parsed.data.name}`,
+        PROPOSAL_STATUS_LABELS,
+      ) ?? `updated Proposal ${parsed.data.name}`,
+    url: `/admin/proposals/${proposalId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/proposals");
   revalidatePath(`/admin/proposals/${proposalId}`);
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
@@ -81,7 +105,16 @@ export async function deleteProposalAction(proposalId: string, clientId: string)
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteProposal(user.workspaceId, proposalId);
+  const deleted = await deleteProposal(user.workspaceId, proposalId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "PROPOSAL",
+      action: `deleted Proposal ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/proposals");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect("/admin/proposals");

@@ -377,3 +377,17 @@ export function TrashIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function ActivityIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        d="M3 10.5h3l1.5-4.5 3 8 1.5-4.5H17"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

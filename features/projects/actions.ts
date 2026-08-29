@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity, statusChangeAction } from "@/features/activity/service";
 import { projectSchema } from "./schemas";
+import { PROJECT_STATUS_LABELS } from "./constants";
 import { createProject, deleteProject, updateProject } from "./service";
 
 export type ProjectActionState = {
@@ -34,6 +36,14 @@ export async function createProjectAction(
   }
 
   const project = await createProject(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "PROJECT",
+    action: `created Project ${project.name}`,
+    url: `/admin/projects/${project.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   redirect(`/admin/projects/${project.id}`);
@@ -57,6 +67,20 @@ export async function updateProjectAction(
     return { error: "That project no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "PROJECT",
+    action:
+      statusChangeAction(
+        updated.previousStatus,
+        parsed.data.status,
+        `Project ${parsed.data.name}`,
+        PROJECT_STATUS_LABELS,
+      ) ?? `updated Project ${parsed.data.name}`,
+    url: `/admin/projects/${projectId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
@@ -67,7 +91,16 @@ export async function deleteProjectAction(projectId: string, clientId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteProject(user.workspaceId, projectId);
+  const deleted = await deleteProject(user.workspaceId, projectId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "PROJECT",
+      action: `deleted Project ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect("/admin/projects");

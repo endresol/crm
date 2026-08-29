@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity } from "@/features/activity/service";
 import { availabilityRulesSchema, meetingScheduleSchema } from "./schemas";
 import {
   cancelMeeting,
@@ -46,6 +47,14 @@ export async function createScheduleAction(
   }
 
   const schedule = await createSchedule(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "MEETING",
+    action: `created Meeting type ${schedule.name}`,
+    url: `/admin/meetings/${schedule.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/meetings");
   redirect(`/admin/meetings/${schedule.id}`);
 }
@@ -66,6 +75,14 @@ export async function updateScheduleAction(
   const updated = await updateSchedule(user.workspaceId, scheduleId, parsed.data);
   if (!updated) return { error: "That schedule no longer exists." };
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "MEETING",
+    action: `updated Meeting type ${parsed.data.name}`,
+    url: `/admin/meetings/${scheduleId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/meetings");
   revalidatePath(`/admin/meetings/${scheduleId}`);
   redirect(`/admin/meetings/${scheduleId}`);
@@ -75,7 +92,16 @@ export async function deleteScheduleAction(scheduleId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteSchedule(user.workspaceId, scheduleId);
+  const deleted = await deleteSchedule(user.workspaceId, scheduleId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "MEETING",
+      action: `deleted Meeting type ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/meetings");
   redirect("/admin/meetings");
 }
@@ -111,6 +137,16 @@ export async function cancelMeetingAction(meetingId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await cancelMeeting(user.workspaceId, meetingId);
+  const meeting = await cancelMeeting(user.workspaceId, meetingId);
+  if (meeting) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "MEETING",
+      action: `cancelled Meeting with ${meeting.bookerName} (${meeting.scheduleName})`,
+      url: meeting.meetingScheduleId ? `/admin/meetings/${meeting.meetingScheduleId}` : null,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/meetings");
 }

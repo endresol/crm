@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity, statusChangeAction } from "@/features/activity/service";
 import { invoiceSchema, lineItemSchema } from "./schemas";
+import { INVOICE_STATUS_LABELS } from "./constants";
 import {
   addLineItem,
   createInvoice,
@@ -55,6 +57,14 @@ export async function createInvoiceAction(
   }
 
   const invoice = await createInvoice(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "INVOICE",
+    action: `created Invoice ${invoice.name}`,
+    url: `/admin/invoices/${invoice.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/invoices");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   redirect(`/admin/invoices/${invoice.id}`);
@@ -78,6 +88,20 @@ export async function updateInvoiceAction(
     return { error: "That invoice no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "INVOICE",
+    action:
+      statusChangeAction(
+        updated.previousStatus,
+        parsed.data.status,
+        `Invoice ${parsed.data.name}`,
+        INVOICE_STATUS_LABELS,
+      ) ?? `updated Invoice ${parsed.data.name}`,
+    url: `/admin/invoices/${invoiceId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/invoices");
   revalidatePath(`/admin/invoices/${invoiceId}`);
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
@@ -88,7 +112,16 @@ export async function deleteInvoiceAction(invoiceId: string, clientId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteInvoice(user.workspaceId, invoiceId);
+  const deleted = await deleteInvoice(user.workspaceId, invoiceId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "INVOICE",
+      action: `deleted Invoice ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/invoices");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect("/admin/invoices");

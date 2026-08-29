@@ -57,12 +57,17 @@ export function createContract(workspaceId: string, input: ContractInput) {
   });
 }
 
+/** Returns the pre-update status (for the activity log's "marked as X" vs.
+ * plain "updated" phrasing — see statusChangeAction) or null if not found. */
 export async function updateContract(workspaceId: string, contractId: string, input: ContractInput) {
-  const { count } = await prisma.contract.updateMany({
+  const before = await prisma.contract.findFirst({
     where: { id: contractId, workspaceId },
-    data: toData(input),
+    select: { status: true },
   });
-  return count > 0;
+  if (!before) return null;
+
+  await prisma.contract.update({ where: { id: contractId }, data: toData(input) });
+  return { previousStatus: before.status };
 }
 
 export async function updateContractContent(
@@ -77,9 +82,15 @@ export async function updateContractContent(
   return count > 0;
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteContract(workspaceId: string, contractId: string) {
-  const { count } = await prisma.contract.deleteMany({
+  const contract = await prisma.contract.findFirst({
     where: { id: contractId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!contract) return null;
+
+  await prisma.contract.delete({ where: { id: contractId } });
+  return contract;
 }

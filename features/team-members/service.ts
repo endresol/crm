@@ -42,7 +42,7 @@ export async function createTeamMember(workspaceId: string, input: TeamMemberInp
 /** Refuses to demote the workspace's last remaining Master Admin — same reasoning as deleteTeamMember. */
 export async function updateTeamMemberRole(workspaceId: string, userId: string, role: TeamMemberInput["role"]) {
   const [target, adminCount] = await Promise.all([
-    prisma.user.findFirst({ where: { id: userId, workspaceId }, select: { role: true } }),
+    prisma.user.findFirst({ where: { id: userId, workspaceId }, select: { role: true, name: true } }),
     prisma.user.count({ where: { workspaceId, role: "MASTER_ADMIN" } }),
   ]);
 
@@ -52,7 +52,7 @@ export async function updateTeamMemberRole(workspaceId: string, userId: string, 
   }
 
   await prisma.user.update({ where: { id: userId }, data: { role } });
-  return { ok: true as const };
+  return { ok: true as const, name: target.name };
 }
 
 /**
@@ -63,7 +63,7 @@ export async function updateTeamMemberRole(workspaceId: string, userId: string, 
  */
 export async function deleteTeamMember(workspaceId: string, userId: string) {
   const [target, totalCount, adminCount] = await Promise.all([
-    prisma.user.findFirst({ where: { id: userId, workspaceId }, select: { role: true } }),
+    prisma.user.findFirst({ where: { id: userId, workspaceId }, select: { role: true, name: true } }),
     prisma.user.count({ where: { workspaceId } }),
     prisma.user.count({ where: { workspaceId, role: "MASTER_ADMIN" } }),
   ]);
@@ -77,5 +77,5 @@ export async function deleteTeamMember(workspaceId: string, userId: string) {
   }
 
   await prisma.user.delete({ where: { id: userId } });
-  return { ok: true as const };
+  return { ok: true as const, name: target.name };
 }

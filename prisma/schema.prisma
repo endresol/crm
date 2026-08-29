@@ -67,6 +67,7 @@ model Workspace {
   questionnaireQuestions QuestionnaireQuestion[]
   meetingSchedules       MeetingSchedule[]
   meetings               Meeting[]
+  activityLogs           ActivityLog[]
 
   @@map("workspaces")
 }
@@ -103,6 +104,7 @@ model User {
   sessions       Session[]
   timeEntries    TimeEntry[]
   calendarEvents CalendarEvent[]
+  activityLogs   ActivityLog[]
 
   @@index([workspaceId])
   @@map("users")
@@ -964,4 +966,63 @@ model Meeting {
   @@index([clientId])
   @@index([contactId])
   @@map("meetings")
+}
+
+enum ActivityEntityType {
+  CLIENT
+  CONTACT
+  DEAL
+  LEAD
+  PROJECT
+  TASK
+  MILESTONE
+  INVOICE
+  PROPOSAL
+  CONTRACT
+  QUESTIONNAIRE
+  MEETING
+  TEAM_MEMBER
+  WORKSPACE
+}
+
+/// A flat, append-only audit trail entry (roadmap #23) — "who did what to
+/// which record, when." One row per mutation across the entity types above.
+/// Deliberately NOT per-record (no entityId / "activity" tab on each record's
+/// own detail page — recordActivity's callers only ever write, nothing reads
+/// by entity) and NOT a push-notification system (no per-user read/unread
+/// state, no bell/dropdown) — this is a flat feed (see /admin/activity and
+/// the Dashboard's recent-activity card), the same trim direction as every
+/// other roadmap item here vs. a full real-product build.
+///
+/// `action` is the *entire* predicate, object included — "created Client
+/// Acme Corp", "moved Deal Website Redesign to Closed Won" — rather than a
+/// separate verb + entityLabel pair the UI reassembles: a status change's
+/// target ("to Closed Won") reads correctly only after the object ("Deal
+/// Website Redesign"), and a verb-then-object-then-target template can't
+/// place it there for both a plain "created X" and a "moved X to Y" in the
+/// same field. So the call site composes the whole sentence tail up front
+/// (see statusChangeAction), and the feed just renders "{actorName}
+/// {action}". It's a snapshot decided at write time (e.g. "Invoice Website
+/// Retainer" baked into the string, not a live join) — so a later-renamed or
+/// deleted record's history still reads sensibly, same reasoning as
+/// Meeting.scheduleName. actorName is a similar snapshot; actorUser is
+/// nullable (SetNull) so a removed team member's past activity survives
+/// them, and portal Contacts / anonymous booking-page guests can be an
+/// "actor" too despite not being a User at all — actorUserId is simply left
+/// null for those.
+model ActivityLog {
+  id          String             @id @default(cuid())
+  workspaceId String
+  entityType  ActivityEntityType
+  action      String
+  url         String?
+  actorUserId String?
+  actorName   String
+  createdAt   DateTime           @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actorUser User?     @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@map("activity_logs")
 }

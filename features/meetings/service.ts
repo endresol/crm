@@ -103,11 +103,17 @@ export async function updateSchedule(
   return count > 0;
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteSchedule(workspaceId: string, scheduleId: string) {
-  const { count } = await prisma.meetingSchedule.deleteMany({
+  const schedule = await prisma.meetingSchedule.findFirst({
     where: { id: scheduleId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!schedule) return null;
+
+  await prisma.meetingSchedule.delete({ where: { id: scheduleId } });
+  return schedule;
 }
 
 /** Fully replaces the rule set — see the comment on availabilityRulesSchema
@@ -173,20 +179,24 @@ export function listMeetingsForSchedule(workspaceId: string, scheduleId: string)
   });
 }
 
+/** Returns the meeting (enough to label an activity log entry) or null if it
+ * doesn't belong to this workspace. */
 export async function cancelMeeting(workspaceId: string, meetingId: string) {
-  const { count } = await prisma.meeting.updateMany({
-    where: { id: meetingId, workspaceId },
-    data: { status: "CANCELLED" },
-  });
-  return count > 0;
+  const meeting = await prisma.meeting.findFirst({ where: { id: meetingId, workspaceId } });
+  if (!meeting) return null;
+
+  await prisma.meeting.update({ where: { id: meetingId }, data: { status: "CANCELLED" } });
+  return meeting;
 }
 
+/** Same as cancelMeeting, scoped to the booking Contact instead of a
+ * workspace — this is the Client Portal's "cancel my meeting" action. */
 export async function cancelMeetingForContact(contactId: string, meetingId: string) {
-  const { count } = await prisma.meeting.updateMany({
-    where: { id: meetingId, contactId },
-    data: { status: "CANCELLED" },
-  });
-  return count > 0;
+  const meeting = await prisma.meeting.findFirst({ where: { id: meetingId, contactId } });
+  if (!meeting) return null;
+
+  await prisma.meeting.update({ where: { id: meetingId }, data: { status: "CANCELLED" } });
+  return meeting;
 }
 
 /** Slot start times a booker could pick right now, in the schedule's

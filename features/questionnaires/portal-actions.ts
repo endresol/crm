@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentContact } from "@/lib/auth/portal-session";
+import { recordActivity } from "@/features/activity/service";
 import { portalAnswerSchema } from "./schemas";
 import { answerQuestion, markQuestionnaireCompleted } from "./service";
 
@@ -41,7 +42,16 @@ export async function submitQuestionnaireAction(questionnaireId: string): Promis
   const contact = await getCurrentContact();
   if (!contact) redirect("/portal/login");
 
-  await markQuestionnaireCompleted(contact.clientId, questionnaireId);
+  const questionnaire = await markQuestionnaireCompleted(contact.clientId, questionnaireId);
+  if (questionnaire) {
+    await recordActivity({
+      workspaceId: questionnaire.workspaceId,
+      entityType: "QUESTIONNAIRE",
+      action: `submitted Questionnaire ${questionnaire.name}`,
+      url: `/admin/questionnaires/${questionnaire.id}`,
+      actorName: `${contact.fullName} (Client)`,
+    });
+  }
   revalidatePath(`/portal/questionnaires/${questionnaireId}`);
   revalidatePath("/portal/questionnaires");
   revalidatePath("/portal/dashboard");

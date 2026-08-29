@@ -31,11 +31,17 @@ export async function updateClient(workspaceId: string, clientId: string, input:
   return count > 0;
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteClient(workspaceId: string, clientId: string) {
-  const { count } = await prisma.client.deleteMany({
+  const client = await prisma.client.findFirst({
     where: { id: clientId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!client) return null;
+
+  await prisma.client.delete({ where: { id: clientId } });
+  return client;
 }
 
 /**

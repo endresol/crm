@@ -6,6 +6,7 @@ import { type ReactNode, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { Avatar } from "@/components/ui/Avatar";
 import {
+  ActivityIcon,
   BriefcaseIcon,
   CalendarIcon,
   ChevronDownIcon,
@@ -85,9 +86,13 @@ const NAV_GROUPS: NavGroup[] = [
   },
   // Team and Settings aren't reached often day-to-day, so they're the last
   // group rather than sitting right under Dashboard where they used to.
+  // Activity sits with them — it's the same "whole workspace, not one CRM
+  // bucket" scope as Team/Settings — but first, since it's checked more
+  // often than either.
   {
     label: "Workspace",
     items: [
+      { href: "/admin/activity", label: "Activity", icon: (p) => <ActivityIcon {...p} /> },
       { href: "/admin/team", label: "Team", icon: (p) => <TeamIcon {...p} /> },
       { href: "/admin/settings", label: "Settings", icon: (p) => <SettingsIcon {...p} /> },
     ],

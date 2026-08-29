@@ -59,11 +59,17 @@ export async function updateContact(workspaceId: string, contactId: string, inpu
   return count > 0;
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteContact(workspaceId: string, contactId: string) {
-  const { count } = await prisma.contact.deleteMany({
+  const contact = await prisma.contact.findFirst({
     where: { id: contactId, workspaceId },
+    select: { id: true, fullName: true },
   });
-  return count > 0;
+  if (!contact) return null;
+
+  await prisma.contact.delete({ where: { id: contactId } });
+  return contact;
 }
 
 /**

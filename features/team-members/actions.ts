@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity } from "@/features/activity/service";
 import { roleUpdateSchema, teamMemberSchema } from "./schemas";
+import { ROLE_LABELS } from "./constants";
 import { createTeamMember, deleteTeamMember, emailTaken, updateTeamMemberRole } from "./service";
 
 export type TeamMemberActionState = {
@@ -32,7 +34,15 @@ export async function createTeamMemberAction(
     return { error: "An account with that email already exists." };
   }
 
-  await createTeamMember(user.workspaceId, parsed.data);
+  const member = await createTeamMember(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "TEAM_MEMBER",
+    action: `invited Team member ${member.name}`,
+    url: "/admin/team",
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/team");
   return { success: true };
 }
@@ -54,6 +64,14 @@ export async function updateTeamMemberRoleAction(
     return { error: result.reason };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "TEAM_MEMBER",
+    action: `changed Team member ${result.name}'s role to ${ROLE_LABELS[parsed.data.role] ?? parsed.data.role}`,
+    url: "/admin/team",
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/team");
   return { success: true };
 }
@@ -71,6 +89,13 @@ export async function deleteTeamMemberAction(memberId: string): Promise<TeamMemb
     return { error: result.reason };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "TEAM_MEMBER",
+    action: `removed Team member ${result.name}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/team");
   return { success: true };
 }

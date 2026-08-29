@@ -52,17 +52,25 @@ export function createDeal(workspaceId: string, input: DealInput) {
   });
 }
 
+/** Returns the pre-update stage (for the activity log's "moved to X" vs.
+ * plain "updated" phrasing — see statusChangeAction) or null if not found. */
 export async function updateDeal(workspaceId: string, dealId: string, input: DealInput) {
-  const { count } = await prisma.deal.updateMany({
-    where: { id: dealId, workspaceId },
-    data: toData(input),
-  });
-  return count > 0;
+  const before = await prisma.deal.findFirst({ where: { id: dealId, workspaceId }, select: { stage: true } });
+  if (!before) return null;
+
+  await prisma.deal.update({ where: { id: dealId }, data: toData(input) });
+  return { previousStage: before.stage };
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteDeal(workspaceId: string, dealId: string) {
-  const { count } = await prisma.deal.deleteMany({
+  const deal = await prisma.deal.findFirst({
     where: { id: dealId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!deal) return null;
+
+  await prisma.deal.delete({ where: { id: dealId } });
+  return deal;
 }

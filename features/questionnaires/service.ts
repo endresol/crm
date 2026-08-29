@@ -56,23 +56,34 @@ export function createQuestionnaire(workspaceId: string, input: QuestionnaireInp
   });
 }
 
+/** Returns the pre-update status (for the activity log's "marked as X" vs.
+ * plain "updated" phrasing — see statusChangeAction) or null if not found. */
 export async function updateQuestionnaire(
   workspaceId: string,
   questionnaireId: string,
   input: QuestionnaireInput,
 ) {
-  const { count } = await prisma.questionnaire.updateMany({
+  const before = await prisma.questionnaire.findFirst({
     where: { id: questionnaireId, workspaceId },
-    data: toData(input),
+    select: { status: true },
   });
-  return count > 0;
+  if (!before) return null;
+
+  await prisma.questionnaire.update({ where: { id: questionnaireId }, data: toData(input) });
+  return { previousStatus: before.status };
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteQuestionnaire(workspaceId: string, questionnaireId: string) {
-  const { count } = await prisma.questionnaire.deleteMany({
+  const questionnaire = await prisma.questionnaire.findFirst({
     where: { id: questionnaireId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!questionnaire) return null;
+
+  await prisma.questionnaire.delete({ where: { id: questionnaireId } });
+  return questionnaire;
 }
 
 export async function addQuestion(
@@ -192,10 +203,15 @@ export async function answerQuestion(clientId: string, questionId: string, answe
   return true;
 }
 
+/** Returns the questionnaire (workspaceId + name, for the activity log entry
+ * this submission triggers) or null if it doesn't belong to this Client. */
 export async function markQuestionnaireCompleted(clientId: string, questionnaireId: string) {
-  const { count } = await prisma.questionnaire.updateMany({
+  const questionnaire = await prisma.questionnaire.findFirst({
     where: { id: questionnaireId, clientId },
-    data: { status: "COMPLETED" },
+    select: { id: true, workspaceId: true, name: true },
   });
-  return count > 0;
+  if (!questionnaire) return null;
+
+  await prisma.questionnaire.update({ where: { id: questionnaireId }, data: { status: "COMPLETED" } });
+  return questionnaire;
 }

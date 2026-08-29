@@ -54,19 +54,30 @@ export function createProposal(workspaceId: string, input: ProposalInput) {
   });
 }
 
+/** Returns the pre-update status (for the activity log's "marked as X" vs.
+ * plain "updated" phrasing — see statusChangeAction) or null if not found. */
 export async function updateProposal(workspaceId: string, proposalId: string, input: ProposalInput) {
-  const { count } = await prisma.proposal.updateMany({
+  const before = await prisma.proposal.findFirst({
     where: { id: proposalId, workspaceId },
-    data: toData(input),
+    select: { status: true },
   });
-  return count > 0;
+  if (!before) return null;
+
+  await prisma.proposal.update({ where: { id: proposalId }, data: toData(input) });
+  return { previousStatus: before.status };
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteProposal(workspaceId: string, proposalId: string) {
-  const { count } = await prisma.proposal.deleteMany({
+  const proposal = await prisma.proposal.findFirst({
     where: { id: proposalId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!proposal) return null;
+
+  await prisma.proposal.delete({ where: { id: proposalId } });
+  return proposal;
 }
 
 export function addLineItem(workspaceId: string, proposalId: string, input: ProposalLineItemInput) {

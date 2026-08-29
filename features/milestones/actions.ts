@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity } from "@/features/activity/service";
 import { milestoneSchema } from "./schemas";
 import { createMilestone, deleteMilestone, updateMilestone } from "./service";
 
@@ -31,7 +32,15 @@ export async function createMilestoneAction(
     return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
-  await createMilestone(user.workspaceId, projectId, parsed.data);
+  const milestone = await createMilestone(user.workspaceId, projectId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "MILESTONE",
+    action: `created Milestone ${milestone.name}`,
+    url: `/admin/projects/${projectId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath(`/admin/projects/${projectId}`);
   return { success: true };
 }
@@ -55,6 +64,14 @@ export async function updateMilestoneAction(
     return { error: "That milestone no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "MILESTONE",
+    action: `updated Milestone ${parsed.data.name}`,
+    url: `/admin/projects/${projectId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath(`/admin/projects/${projectId}`);
   return { success: true };
 }
@@ -63,6 +80,15 @@ export async function deleteMilestoneAction(milestoneId: string, projectId: stri
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteMilestone(user.workspaceId, milestoneId);
+  const deleted = await deleteMilestone(user.workspaceId, milestoneId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "MILESTONE",
+      action: `deleted Milestone ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath(`/admin/projects/${projectId}`);
 }

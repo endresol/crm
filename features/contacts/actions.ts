@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hashPassword } from "@/lib/auth/password";
 import { uploadImage } from "@/lib/uploads";
+import { recordActivity } from "@/features/activity/service";
 import { contactPortalPasswordSchema, contactSchema } from "./schemas";
 import {
   createContact,
@@ -51,6 +52,14 @@ export async function createContactAction(
   }
 
   const contact = await createContact(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "CONTACT",
+    action: `created Contact ${contact.fullName}`,
+    url: `/admin/contacts/${contact.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/contacts");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   redirect(`/admin/contacts/${contact.id}`);
@@ -74,6 +83,14 @@ export async function updateContactAction(
     return { error: "That contact no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "CONTACT",
+    action: `updated Contact ${parsed.data.fullName}`,
+    url: `/admin/contacts/${contactId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/contacts");
   revalidatePath(`/admin/contacts/${contactId}`);
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
@@ -84,7 +101,16 @@ export async function deleteContactAction(contactId: string, clientId: string) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteContact(user.workspaceId, contactId);
+  const deleted = await deleteContact(user.workspaceId, contactId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "CONTACT",
+      action: `deleted Contact ${deleted.fullName}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/contacts");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect("/admin/contacts");

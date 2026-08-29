@@ -57,19 +57,30 @@ export function createInvoice(workspaceId: string, input: InvoiceInput) {
   });
 }
 
+/** Returns the pre-update status (for the activity log's "marked as X" vs.
+ * plain "updated" phrasing — see statusChangeAction) or null if not found. */
 export async function updateInvoice(workspaceId: string, invoiceId: string, input: InvoiceInput) {
-  const { count } = await prisma.invoice.updateMany({
+  const before = await prisma.invoice.findFirst({
     where: { id: invoiceId, workspaceId },
-    data: toData(input),
+    select: { status: true },
   });
-  return count > 0;
+  if (!before) return null;
+
+  await prisma.invoice.update({ where: { id: invoiceId }, data: toData(input) });
+  return { previousStatus: before.status };
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteInvoice(workspaceId: string, invoiceId: string) {
-  const { count } = await prisma.invoice.deleteMany({
+  const invoice = await prisma.invoice.findFirst({
     where: { id: invoiceId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!invoice) return null;
+
+  await prisma.invoice.delete({ where: { id: invoiceId } });
+  return invoice;
 }
 
 export function addLineItem(workspaceId: string, invoiceId: string, input: LineItemInput) {

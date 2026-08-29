@@ -6,7 +6,7 @@ Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client),
 **Milestones** (#11), **Gantt chart view** (#12),
 **Upgrade Time Tracking to log against Project/Task** (#13), **Document Templates system** (#14),
 **Invoices** (#15), **Proposals** (#16), **Contracts** (#17), **Questionnaires** (#18),
-**Client Portal** (#20), **Meeting Scheduler** (#19).
+**Client Portal** (#20), **Meeting Scheduler** (#19), **Activity log / notifications** (#23).
 
 `DocumentTemplate` is a single shared model (type: PROPOSAL/CONTRACT/INVOICE/QUESTIONNAIRE) with
 `{{merge.field}}` tokens (features/document-templates/mergeFields.ts) resolved against a Client/
@@ -51,6 +51,28 @@ revokes their PortalSession rows) without also being able to clear that Contact'
 cookie. That bounce now lives in each login page itself, using the same authoritative
 getCurrentUser()/getCurrentContact() check the page needed anyway — see proxy.ts's comment.
 
+Activity log / notifications (#23) is a flat, workspace-wide `ActivityLog` audit trail
+(features/activity) — one row per mutation, `action` holding the *entire* predicate ("moved Deal
+Website Redesign to Closed Won") rather than a verb + object pair the UI reassembles, since a
+status change's target only reads correctly sitting after the object (see the schema comment and
+statusChangeAction). Wired into the CRM/Delivery/Money entities' create/update/delete actions
+(status-aware where the entity has one: Deal, Lead, Project, Task, Invoice, Proposal, Contract,
+Questionnaire) plus Team members, Workspace settings, and both Client Portal / public-booking-page
+mutations (questionnaire submit, meeting book/cancel — actorUserId is null there, actorName is a
+Contact or guest name instead). Surfaced as a filterable feed at /admin/activity and a "Recent
+activity" card on the Dashboard. Trimmed: no per-record activity tab (entityId isn't stored — see
+the schema comment), no push-notification bell/read-state, no logging for lower-signal catalog
+CRUD (Products, Price Books, Discounts, Document Templates, SOPs, Calendar events, Time entries) —
+would mostly add noise, same reasoning Time Tracking was left out of Client Portal's scope.
+
+While testing this, found and fixed a real pre-existing bug in features/tasks/actions.ts: creating
+a Task in a project with zero milestones always failed validation. TaskForm omits the Milestone
+`<select>` entirely when there are no milestones yet (same conditional-render pattern as the
+Template `<select>` on Invoice/Proposal/Contract/Questionnaire), so `formData.get("milestoneId")`
+came back `null` instead of `""` and failed the schema's `optionalId` (which only tolerates
+undefined/""). Fixed with the same `?? ""` used at the other call sites — see the comment in
+parseTaskForm.
+
 Everything below this line is *not yet built*.
 
 Pick items in whatever order you like — just respect the "Requires" line. Items with no "Requires" line have no dependency on anything in this list and can be built anytime.
@@ -59,8 +81,6 @@ Pick items in whatever order you like — just respect the "Requires" line. Item
     Requires: the document type they're for (#15–18)
 22. **Integrations** — Google/Outlook calendar sync, payment gateways (Stripe/PayPal/etc.).
     Calendar sync requires **Calendar** (#4); payments require **Invoices** (#15)
-23. **Activity log / notifications** — audit trail across entities.
-    No hard dependency, but more useful once several entity types exist — good candidate for later.
 
 ## Suggested natural groupings (not an order, just what tends to travel together)
 

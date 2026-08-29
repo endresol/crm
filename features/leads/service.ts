@@ -34,19 +34,27 @@ export function createLead(workspaceId: string, input: LeadInput) {
   });
 }
 
+/** Returns the pre-update status (for the activity log's "marked as X" vs.
+ * plain "updated" phrasing — see statusChangeAction) or null if not found. */
 export async function updateLead(workspaceId: string, leadId: string, input: LeadInput) {
-  const { count } = await prisma.lead.updateMany({
-    where: { id: leadId, workspaceId },
-    data: toData(input),
-  });
-  return count > 0;
+  const before = await prisma.lead.findFirst({ where: { id: leadId, workspaceId }, select: { status: true } });
+  if (!before) return null;
+
+  await prisma.lead.update({ where: { id: leadId }, data: toData(input) });
+  return { previousStatus: before.status };
 }
 
+/** Returns the deleted row (just enough to label an activity log entry) so
+ * the caller doesn't need a separate lookup before deleting. */
 export async function deleteLead(workspaceId: string, leadId: string) {
-  const { count } = await prisma.lead.deleteMany({
+  const lead = await prisma.lead.findFirst({
     where: { id: leadId, workspaceId },
+    select: { id: true, name: true },
   });
-  return count > 0;
+  if (!lead) return null;
+
+  await prisma.lead.delete({ where: { id: leadId } });
+  return lead;
 }
 
 /**
@@ -84,6 +92,6 @@ export async function convertLeadToClient(workspaceId: string, leadId: string) {
       data: { status: "CONVERTED", convertedClientId: client.id },
     });
 
-    return client;
+    return { client, leadName: lead.name };
   });
 }

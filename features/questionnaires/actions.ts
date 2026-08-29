@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordActivity, statusChangeAction } from "@/features/activity/service";
 import { questionnaireQuestionSchema, questionnaireSchema } from "./schemas";
+import { QUESTIONNAIRE_STATUS_LABELS } from "./constants";
 import {
   addQuestion,
   createQuestionnaire,
@@ -47,6 +49,14 @@ export async function createQuestionnaireAction(
   }
 
   const questionnaire = await createQuestionnaire(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "QUESTIONNAIRE",
+    action: `created Questionnaire ${questionnaire.name}`,
+    url: `/admin/questionnaires/${questionnaire.id}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/questionnaires");
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
   redirect(`/admin/questionnaires/${questionnaire.id}`);
@@ -70,6 +80,20 @@ export async function updateQuestionnaireAction(
     return { error: "That questionnaire no longer exists." };
   }
 
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "QUESTIONNAIRE",
+    action:
+      statusChangeAction(
+        updated.previousStatus,
+        parsed.data.status,
+        `Questionnaire ${parsed.data.name}`,
+        QUESTIONNAIRE_STATUS_LABELS,
+      ) ?? `updated Questionnaire ${parsed.data.name}`,
+    url: `/admin/questionnaires/${questionnaireId}`,
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/questionnaires");
   revalidatePath(`/admin/questionnaires/${questionnaireId}`);
   revalidatePath(`/admin/clients/${parsed.data.clientId}`);
@@ -80,7 +104,16 @@ export async function deleteQuestionnaireAction(questionnaireId: string, clientI
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  await deleteQuestionnaire(user.workspaceId, questionnaireId);
+  const deleted = await deleteQuestionnaire(user.workspaceId, questionnaireId);
+  if (deleted) {
+    await recordActivity({
+      workspaceId: user.workspaceId,
+      entityType: "QUESTIONNAIRE",
+      action: `deleted Questionnaire ${deleted.name}`,
+      actorUserId: user.id,
+      actorName: user.name,
+    });
+  }
   revalidatePath("/admin/questionnaires");
   revalidatePath(`/admin/clients/${clientId}`);
   redirect("/admin/questionnaires");

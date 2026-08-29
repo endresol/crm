@@ -1,5 +1,6 @@
 "use server";
 
+import { recordActivity } from "@/features/activity/service";
 import { bookingSchema } from "./schemas";
 import { bookMeeting, getAvailableSlots } from "./service";
 
@@ -40,6 +41,14 @@ export async function bookMeetingPublicAction(
 
   const result = await bookMeeting(scheduleId, parsed.data);
   if (!result.ok) return { error: result.reason };
+
+  await recordActivity({
+    workspaceId: result.meeting.workspaceId,
+    entityType: "MEETING",
+    action: `booked Meeting with ${result.meeting.bookerName} (${result.meeting.scheduleName})`,
+    url: result.meeting.meetingScheduleId ? `/admin/meetings/${result.meeting.meetingScheduleId}` : null,
+    actorName: `${result.meeting.bookerName} (guest)`,
+  });
 
   return { success: true };
 }

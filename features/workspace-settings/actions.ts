@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { uploadImage } from "@/lib/uploads";
+import { recordActivity } from "@/features/activity/service";
 import { workspaceSettingsSchema } from "./schemas";
 import { setWorkspaceLogo, updateWorkspaceSettings } from "./service";
 
@@ -32,6 +33,14 @@ export async function updateWorkspaceSettingsAction(
   }
 
   await updateWorkspaceSettings(user.workspaceId, parsed.data);
+  await recordActivity({
+    workspaceId: user.workspaceId,
+    entityType: "WORKSPACE",
+    action: "updated Workspace settings",
+    url: "/admin/settings",
+    actorUserId: user.id,
+    actorName: user.name,
+  });
   revalidatePath("/admin/settings");
   revalidatePath("/", "layout");
   return { success: true };

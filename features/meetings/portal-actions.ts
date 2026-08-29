@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentContact } from "@/lib/auth/portal-session";
+import { recordActivity } from "@/features/activity/service";
 import { bookingSchema } from "./schemas";
 import { bookMeeting, cancelMeetingForContact } from "./service";
 
@@ -34,6 +35,13 @@ export async function bookMeetingPortalAction(
   });
   if (!result.ok) return { error: result.reason };
 
+  await recordActivity({
+    workspaceId: result.meeting.workspaceId,
+    entityType: "MEETING",
+    action: `booked Meeting with ${result.meeting.bookerName} (${result.meeting.scheduleName})`,
+    url: result.meeting.meetingScheduleId ? `/admin/meetings/${result.meeting.meetingScheduleId}` : null,
+    actorName: `${contact.fullName} (Client)`,
+  });
   revalidatePath("/portal/meetings");
   redirect("/portal/meetings");
 }
@@ -42,6 +50,15 @@ export async function cancelMeetingPortalAction(meetingId: string): Promise<void
   const contact = await getCurrentContact();
   if (!contact) redirect("/portal/login");
 
-  await cancelMeetingForContact(contact.id, meetingId);
+  const meeting = await cancelMeetingForContact(contact.id, meetingId);
+  if (meeting) {
+    await recordActivity({
+      workspaceId: meeting.workspaceId,
+      entityType: "MEETING",
+      action: `cancelled Meeting with ${meeting.bookerName} (${meeting.scheduleName})`,
+      url: meeting.meetingScheduleId ? `/admin/meetings/${meeting.meetingScheduleId}` : null,
+      actorName: `${contact.fullName} (Client)`,
+    });
+  }
   revalidatePath("/portal/meetings");
 }
