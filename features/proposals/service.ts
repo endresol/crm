@@ -4,8 +4,10 @@ import { prisma } from "@/lib/prisma";
 import type { ProposalInput, ProposalLineItemInput } from "./schemas";
 
 const withRelations = {
-  client: { select: { id: true, name: true } },
-  contact: { select: { id: true, fullName: true } },
+  // email selected on both — the "Send Email" button (roadmap #21) defaults
+  // its recipient to the Contact's email, falling back to the Client's.
+  client: { select: { id: true, name: true, email: true } },
+  contact: { select: { id: true, fullName: true, email: true } },
   lineItems: true,
 } as const;
 

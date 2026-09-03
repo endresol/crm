@@ -5,11 +5,13 @@ import { getInvoice } from "@/features/invoices/service";
 import { listContacts } from "@/features/contacts/service";
 import { listTemplatesByType } from "@/features/document-templates/service";
 import { listProducts } from "@/features/products/service";
-import { formatDate } from "@/lib/format";
+import { listEmailTemplates } from "@/features/email-templates/service";
+import { formatCurrency, formatDate } from "@/lib/format";
 import {
   INVOICE_BILLING_TYPE_LABELS,
   INVOICE_STATUS_BADGE_VARIANT,
   INVOICE_STATUS_LABELS,
+  invoiceTotal,
 } from "@/features/invoices/constants";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card } from "@/components/ui/Card";
@@ -17,6 +19,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EditInvoiceButton } from "@/features/invoices/components/EditInvoiceButton";
 import { DeleteInvoiceButton } from "@/features/invoices/components/DeleteInvoiceButton";
 import { LineItemsEditor } from "@/features/invoices/components/LineItemsEditor";
+import { SendEmailButton } from "@/features/email-templates/components/SendEmailButton";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function InvoiceDetailPage({
@@ -31,10 +34,11 @@ export default async function InvoiceDetailPage({
   const invoice = await getInvoice(user.workspaceId, id);
   if (!invoice) notFound();
 
-  const [contacts, templates, products] = await Promise.all([
+  const [contacts, templates, products, emailTemplates] = await Promise.all([
     listContacts(user.workspaceId),
     listTemplatesByType(user.workspaceId, "INVOICE"),
     listProducts(user.workspaceId),
+    listEmailTemplates(user.workspaceId),
   ]);
 
   return (
@@ -49,6 +53,26 @@ export default async function InvoiceDetailPage({
               contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, clientId: c.clientId }))}
               templates={templates}
               workspaceName={user.workspaceName}
+            />
+            <SendEmailButton
+              entityType="INVOICE"
+              url={`/admin/invoices/${invoice.id}`}
+              activityLabel={`Invoice ${invoice.name}`}
+              revalidatePaths={["/admin/email-log"]}
+              templates={emailTemplates}
+              defaultTemplateType="INVOICE_SENT"
+              defaultTo={invoice.contact?.email ?? invoice.client.email}
+              mergeContext={{
+                client: { name: invoice.client.name, email: invoice.client.email },
+                contact: invoice.contact ? { name: invoice.contact.fullName } : undefined,
+                workspace: { name: user.workspaceName },
+                today: new Date().toLocaleDateString("en-US"),
+                record: {
+                  name: invoice.name,
+                  amount: formatCurrency(invoiceTotal(invoice.lineItems), invoice.currency),
+                  dueDate: invoice.dueDate ? formatDate(invoice.dueDate, user.workspaceDateFormat) : "",
+                },
+              }}
             />
             <DeleteInvoiceButton invoiceId={invoice.id} clientId={invoice.clientId} />
           </>

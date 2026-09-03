@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentContact } from "@/lib/auth/portal-session";
 import { recordActivity } from "@/features/activity/service";
+import { sendAutoTemplatedEmail } from "@/features/email-templates/service";
+import { getRequestBaseUrl } from "@/lib/base-url";
+import { formatDateTime } from "@/lib/format";
 import { bookingSchema } from "./schemas";
 import { bookMeeting, cancelMeetingForContact } from "./service";
 
@@ -42,6 +45,30 @@ export async function bookMeetingPortalAction(
     url: result.meeting.meetingScheduleId ? `/admin/meetings/${result.meeting.meetingScheduleId}` : null,
     actorName: `${contact.fullName} (Client)`,
   });
+
+  const baseUrl = await getRequestBaseUrl();
+  await sendAutoTemplatedEmail({
+    workspaceId: result.meeting.workspaceId,
+    type: "MEETING_CONFIRMATION",
+    entityType: "MEETING",
+    url: result.meeting.meetingScheduleId ? `/admin/meetings/${result.meeting.meetingScheduleId}` : null,
+    to: result.meeting.bookerEmail,
+    fromName: contact.workspaceName,
+    mergeContext: {
+      workspace: { name: contact.workspaceName },
+      contact: { name: contact.fullName },
+      meeting: {
+        scheduleName: result.meeting.scheduleName,
+        bookerName: result.meeting.bookerName,
+        time: formatDateTime(result.meeting.startAt, {
+          pattern: contact.workspaceDateFormat,
+          timeZone: contact.workspaceTimezone,
+        }),
+        url: `${baseUrl}/portal/meetings`,
+      },
+    },
+  });
+
   revalidatePath("/portal/meetings");
   redirect("/portal/meetings");
 }
@@ -58,6 +85,29 @@ export async function cancelMeetingPortalAction(meetingId: string): Promise<void
       action: `cancelled Meeting with ${meeting.bookerName} (${meeting.scheduleName})`,
       url: meeting.meetingScheduleId ? `/admin/meetings/${meeting.meetingScheduleId}` : null,
       actorName: `${contact.fullName} (Client)`,
+    });
+
+    const baseUrl = await getRequestBaseUrl();
+    await sendAutoTemplatedEmail({
+      workspaceId: meeting.workspaceId,
+      type: "MEETING_CANCELLED",
+      entityType: "MEETING",
+      url: meeting.meetingScheduleId ? `/admin/meetings/${meeting.meetingScheduleId}` : null,
+      to: meeting.bookerEmail,
+      fromName: contact.workspaceName,
+      mergeContext: {
+        workspace: { name: contact.workspaceName },
+        contact: { name: contact.fullName },
+        meeting: {
+          scheduleName: meeting.scheduleName,
+          bookerName: meeting.bookerName,
+          time: formatDateTime(meeting.startAt, {
+            pattern: contact.workspaceDateFormat,
+            timeZone: contact.workspaceTimezone,
+          }),
+          url: `${baseUrl}/portal/meetings`,
+        },
+      },
     });
   }
   revalidatePath("/portal/meetings");

@@ -5,6 +5,7 @@ import { getContract } from "@/features/contracts/service";
 import { listContacts } from "@/features/contacts/service";
 import { listDeals } from "@/features/deals/service";
 import { listTemplatesByType } from "@/features/document-templates/service";
+import { listEmailTemplates } from "@/features/email-templates/service";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { CONTRACT_STATUS_BADGE_VARIANT, CONTRACT_STATUS_LABELS } from "@/features/contracts/constants";
 import { Topbar } from "@/components/layout/Topbar";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EditContractButton } from "@/features/contracts/components/EditContractButton";
 import { DeleteContractButton } from "@/features/contracts/components/DeleteContractButton";
 import { ContractEditor } from "@/features/contracts/components/ContractEditor";
+import { SendEmailButton } from "@/features/email-templates/components/SendEmailButton";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ContractDetailPage({
@@ -27,10 +29,11 @@ export default async function ContractDetailPage({
   const contract = await getContract(user.workspaceId, id);
   if (!contract) notFound();
 
-  const [contacts, deals, templates] = await Promise.all([
+  const [contacts, deals, templates, emailTemplates] = await Promise.all([
     listContacts(user.workspaceId),
     listDeals(user.workspaceId),
     listTemplatesByType(user.workspaceId, "CONTRACT"),
+    listEmailTemplates(user.workspaceId),
   ]);
 
   return (
@@ -45,6 +48,28 @@ export default async function ContractDetailPage({
               contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, clientId: c.clientId }))}
               deals={deals.map((d) => ({ id: d.id, name: d.name, clientId: d.clientId }))}
               templates={templates}
+            />
+            <SendEmailButton
+              entityType="CONTRACT"
+              url={`/admin/contracts/${contract.id}`}
+              activityLabel={`Contract ${contract.name}`}
+              revalidatePaths={["/admin/email-log"]}
+              templates={emailTemplates}
+              defaultTemplateType="CONTRACT_SENT"
+              defaultTo={contract.contact?.email ?? contract.client.email}
+              mergeContext={{
+                client: { name: contract.client.name, email: contract.client.email },
+                contact: contract.contact ? { name: contract.contact.fullName } : undefined,
+                workspace: { name: user.workspaceName },
+                today: new Date().toLocaleDateString("en-US"),
+                record: {
+                  name: contract.name,
+                  amount:
+                    contract.contractValue != null
+                      ? formatCurrency(contract.contractValue, contract.currency)
+                      : "",
+                },
+              }}
             />
             <DeleteContractButton contractId={contract.id} clientId={contract.clientId} />
           </>

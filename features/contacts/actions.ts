@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { hashPassword } from "@/lib/auth/password";
 import { uploadImage } from "@/lib/uploads";
 import { recordActivity } from "@/features/activity/service";
+import { sendAutoTemplatedEmail } from "@/features/email-templates/service";
+import { getRequestBaseUrl } from "@/lib/base-url";
 import { contactPortalPasswordSchema, contactSchema } from "./schemas";
 import {
   createContact,
@@ -169,6 +171,26 @@ export async function setPortalPasswordAction(
   const passwordHash = await hashPassword(parsed.data.password);
   const result = await setContactPortalPassword(user.workspaceId, contactId, passwordHash);
   if (!result.ok) return { error: result.reason };
+
+  // Deliberately no plaintext password in this email (see docs/roadmap.md) —
+  // the admin still communicates it directly, same as before this feature;
+  // this just tells the Contact where to log in once they have it.
+  if (result.contact.email) {
+    const baseUrl = await getRequestBaseUrl();
+    await sendAutoTemplatedEmail({
+      workspaceId: user.workspaceId,
+      type: "PORTAL_INVITE",
+      entityType: "CONTACT",
+      url: `/admin/contacts/${contactId}`,
+      to: result.contact.email,
+      fromName: user.workspaceName,
+      mergeContext: {
+        workspace: { name: user.workspaceName },
+        contact: { name: result.contact.fullName },
+        portal: { loginUrl: `${baseUrl}/portal/login` },
+      },
+    });
+  }
 
   revalidatePath(`/admin/contacts/${contactId}`);
   return { success: true };

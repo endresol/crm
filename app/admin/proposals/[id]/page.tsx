@@ -5,14 +5,20 @@ import { getProposal } from "@/features/proposals/service";
 import { listContacts } from "@/features/contacts/service";
 import { listTemplatesByType } from "@/features/document-templates/service";
 import { listProducts } from "@/features/products/service";
-import { formatDate } from "@/lib/format";
-import { PROPOSAL_STATUS_BADGE_VARIANT, PROPOSAL_STATUS_LABELS } from "@/features/proposals/constants";
+import { listEmailTemplates } from "@/features/email-templates/service";
+import { formatCurrency, formatDate } from "@/lib/format";
+import {
+  PROPOSAL_STATUS_BADGE_VARIANT,
+  PROPOSAL_STATUS_LABELS,
+  proposalTotal,
+} from "@/features/proposals/constants";
 import { Topbar } from "@/components/layout/Topbar";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EditProposalButton } from "@/features/proposals/components/EditProposalButton";
 import { DeleteProposalButton } from "@/features/proposals/components/DeleteProposalButton";
 import { LineItemsEditor } from "@/features/proposals/components/LineItemsEditor";
+import { SendEmailButton } from "@/features/email-templates/components/SendEmailButton";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function ProposalDetailPage({
@@ -27,10 +33,11 @@ export default async function ProposalDetailPage({
   const proposal = await getProposal(user.workspaceId, id);
   if (!proposal) notFound();
 
-  const [contacts, templates, products] = await Promise.all([
+  const [contacts, templates, products, emailTemplates] = await Promise.all([
     listContacts(user.workspaceId),
     listTemplatesByType(user.workspaceId, "PROPOSAL"),
     listProducts(user.workspaceId),
+    listEmailTemplates(user.workspaceId),
   ]);
 
   return (
@@ -45,6 +52,25 @@ export default async function ProposalDetailPage({
               contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, clientId: c.clientId }))}
               templates={templates}
               workspaceName={user.workspaceName}
+            />
+            <SendEmailButton
+              entityType="PROPOSAL"
+              url={`/admin/proposals/${proposal.id}`}
+              activityLabel={`Proposal ${proposal.name}`}
+              revalidatePaths={["/admin/email-log"]}
+              templates={emailTemplates}
+              defaultTemplateType="PROPOSAL_SENT"
+              defaultTo={proposal.contact?.email ?? proposal.client.email}
+              mergeContext={{
+                client: { name: proposal.client.name, email: proposal.client.email },
+                contact: proposal.contact ? { name: proposal.contact.fullName } : undefined,
+                workspace: { name: user.workspaceName },
+                today: new Date().toLocaleDateString("en-US"),
+                record: {
+                  name: proposal.name,
+                  amount: formatCurrency(proposalTotal(proposal.lineItems), proposal.currency),
+                },
+              }}
             />
             <DeleteProposalButton proposalId={proposal.id} clientId={proposal.clientId} />
           </>

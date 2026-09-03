@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getQuestionnaire } from "@/features/questionnaires/service";
 import { listContacts } from "@/features/contacts/service";
 import { listTemplatesByType } from "@/features/document-templates/service";
+import { listEmailTemplates } from "@/features/email-templates/service";
+import { getRequestBaseUrl } from "@/lib/base-url";
 import {
   QUESTIONNAIRE_STATUS_BADGE_VARIANT,
   QUESTIONNAIRE_STATUS_LABELS,
@@ -14,6 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EditQuestionnaireButton } from "@/features/questionnaires/components/EditQuestionnaireButton";
 import { DeleteQuestionnaireButton } from "@/features/questionnaires/components/DeleteQuestionnaireButton";
 import { QuestionsEditor } from "@/features/questionnaires/components/QuestionsEditor";
+import { SendEmailButton } from "@/features/email-templates/components/SendEmailButton";
 import styles from "@/components/layout/AdminShell.module.css";
 
 export default async function QuestionnaireDetailPage({
@@ -28,9 +31,11 @@ export default async function QuestionnaireDetailPage({
   const questionnaire = await getQuestionnaire(user.workspaceId, id);
   if (!questionnaire) notFound();
 
-  const [contacts, templates] = await Promise.all([
+  const [contacts, templates, emailTemplates, baseUrl] = await Promise.all([
     listContacts(user.workspaceId),
     listTemplatesByType(user.workspaceId, "QUESTIONNAIRE"),
+    listEmailTemplates(user.workspaceId),
+    getRequestBaseUrl(),
   ]);
 
   return (
@@ -44,6 +49,23 @@ export default async function QuestionnaireDetailPage({
               questionnaire={questionnaire}
               contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, clientId: c.clientId }))}
               templates={templates}
+            />
+            <SendEmailButton
+              entityType="QUESTIONNAIRE"
+              url={`/admin/questionnaires/${questionnaire.id}`}
+              activityLabel={`Questionnaire ${questionnaire.name}`}
+              revalidatePaths={["/admin/email-log"]}
+              templates={emailTemplates}
+              defaultTemplateType="QUESTIONNAIRE_SENT"
+              defaultTo={questionnaire.contact?.email ?? questionnaire.client.email}
+              mergeContext={{
+                client: { name: questionnaire.client.name, email: questionnaire.client.email },
+                contact: questionnaire.contact ? { name: questionnaire.contact.fullName } : undefined,
+                workspace: { name: user.workspaceName },
+                today: new Date().toLocaleDateString("en-US"),
+                record: { name: questionnaire.name },
+                portal: { loginUrl: `${baseUrl}/portal/login` },
+              }}
             />
             <DeleteQuestionnaireButton questionnaireId={questionnaire.id} clientId={questionnaire.clientId} />
           </>

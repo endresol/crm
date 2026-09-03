@@ -5,8 +5,10 @@ import { substituteMergeFields } from "@/features/document-templates/mergeFields
 import type { QuestionnaireInput, QuestionnaireQuestionInput } from "./schemas";
 
 const withRelations = {
+  // email selected on both — the "Send Email" button (roadmap #21) defaults
+  // its recipient to the Contact's email, falling back to the Client's.
   client: { select: { id: true, name: true, email: true } },
-  contact: { select: { id: true, fullName: true } },
+  contact: { select: { id: true, fullName: true, email: true } },
   // Just `answer` (not `prompt`) — enough to compute "3 of 5 answered" (see
   // questionnaireProgress in constants.ts) on a list view without pulling in
   // every question's full text.

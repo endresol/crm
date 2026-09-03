@@ -116,7 +116,7 @@ export async function setContactPortalPassword(
 ) {
   const contact = await prisma.contact.findFirst({
     where: { id: contactId, workspaceId },
-    select: { id: true, email: true },
+    select: { id: true, email: true, fullName: true },
   });
   if (!contact) return { ok: false as const, reason: "That contact no longer exists." };
   if (passwordHash && !contact.email) {
@@ -127,5 +127,7 @@ export async function setContactPortalPassword(
     prisma.contact.update({ where: { id: contactId }, data: { portalPasswordHash: passwordHash } }),
     prisma.portalSession.deleteMany({ where: { contactId } }),
   ]);
-  return { ok: true as const };
+  // Returned so setPortalPasswordAction can send the portal-invite email
+  // (roadmap #21) without a second lookup.
+  return { ok: true as const, contact };
 }

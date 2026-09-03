@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { recordActivity } from "@/features/activity/service";
+import { sendAutoTemplatedEmail } from "@/features/email-templates/service";
+import { getRequestBaseUrl } from "@/lib/base-url";
+import { formatDateTime } from "@/lib/format";
 import { availabilityRulesSchema, meetingScheduleSchema } from "./schemas";
 import {
   cancelMeeting,
@@ -146,6 +149,31 @@ export async function cancelMeetingAction(meetingId: string) {
       url: meeting.meetingScheduleId ? `/admin/meetings/${meeting.meetingScheduleId}` : null,
       actorUserId: user.id,
       actorName: user.name,
+    });
+
+    // Only a Contact-attributed booking has a page to point them at — a
+    // guest's booking has no lookup/token to view it by (same reasoning as
+    // the public booking flow's confirmation email).
+    const baseUrl = meeting.contactId ? await getRequestBaseUrl() : null;
+    await sendAutoTemplatedEmail({
+      workspaceId: user.workspaceId,
+      type: "MEETING_CANCELLED",
+      entityType: "MEETING",
+      url: meeting.meetingScheduleId ? `/admin/meetings/${meeting.meetingScheduleId}` : null,
+      to: meeting.bookerEmail,
+      fromName: user.workspaceName,
+      mergeContext: {
+        workspace: { name: user.workspaceName },
+        meeting: {
+          scheduleName: meeting.scheduleName,
+          bookerName: meeting.bookerName,
+          time: formatDateTime(meeting.startAt, {
+            pattern: user.workspaceDateFormat,
+            timeZone: user.workspaceTimezone,
+          }),
+          url: baseUrl ? `${baseUrl}/portal/meetings` : "",
+        },
+      },
     });
   }
   revalidatePath("/admin/meetings");

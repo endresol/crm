@@ -6,7 +6,8 @@ Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client),
 **Milestones** (#11), **Gantt chart view** (#12),
 **Upgrade Time Tracking to log against Project/Task** (#13), **Document Templates system** (#14),
 **Invoices** (#15), **Proposals** (#16), **Contracts** (#17), **Questionnaires** (#18),
-**Client Portal** (#20), **Meeting Scheduler** (#19), **Activity log / notifications** (#23).
+**Client Portal** (#20), **Meeting Scheduler** (#19), **Activity log / notifications** (#23),
+**Email Templates** (#21).
 
 `DocumentTemplate` is a single shared model (type: PROPOSAL/CONTRACT/INVOICE/QUESTIONNAIRE) with
 `{{merge.field}}` tokens (features/document-templates/mergeFields.ts) resolved against a Client/
@@ -73,12 +74,35 @@ came back `null` instead of `""` and failed the schema's `optionalId` (which onl
 undefined/""). Fixed with the same `?? ""` used at the other call sites — see the comment in
 parseTaskForm.
 
+Email Templates (#21) is the first *real* outbound email in this clone — everywhere else (Client
+Portal invites, Meeting confirmations) had been explicitly trimmed for lacking it. Backed by
+Resend (`lib/email.ts`; `RESEND_API_KEY`/`EMAIL_FROM_ADDRESS`, see .env.example) — one
+env-configured sender for every workspace, no per-workspace custom domain/DNS verification. Two
+new models: `EmailTemplate` (subject + body, `{{merge.field}}` tokens resolved by
+features/email-templates/mergeFields.ts — a superset of document-templates' tokens, plus
+`record`/`meeting`/`portal` fields for whatever the send is about) and `EmailLog` (mirrors
+ActivityLog's shape on purpose — entityType + url, no per-record FK — since real inbound-reply
+monitoring is out of scope for this pass; EmailLog's send outcomes, failures included, are the
+practical stand-in for "monitor responses" here). Manual send only: a "Send Email" button on the
+Invoice/Proposal/Contract/Questionnaire detail pages (`SendEmailButton`/`sendTemplatedEmailAction`)
+lets a human pick a template, edit the merge-filled subject/body, and send — no automatic firing on
+a status change. The three system-triggered types (MEETING_CONFIRMATION/MEETING_CANCELLED/
+PORTAL_INVITE) are the exception, sent automatically from bookMeeting/cancelMeeting and
+setContactPortalPassword once real delivery existed, closing out two long-standing "no outbound
+email" trims from #19/#20 — each falls back to a built-in default template
+(features/email-templates/defaults.ts) when a workspace hasn't created its own of that type yet,
+since this codebase has no "seed default rows on workspace creation" step to hook a real seed into.
+The Client Portal invite email deliberately never carries the actual password (the admin still
+communicates it directly) — just a login link. Every send, successful or not, writes both an
+EmailLog row and (on success) a normal ActivityLog entry via the sending feature's own
+recordActivity call. Trimmed: no inbound reply capture/threaded inbox (a natural #24 if picked back
+up), no automatic sends on status change, no CC/BCC/scheduling/attachments (no PDF generation
+exists in this clone either), no per-workspace sending domain.
+
 Everything below this line is *not yet built*.
 
 Pick items in whatever order you like — just respect the "Requires" line. Items with no "Requires" line have no dependency on anything in this list and can be built anytime.
 
-21. **Email templates** — customizable transactional emails (invoice sent/overdue, proposal sent, etc.).
-    Requires: the document type they're for (#15–18)
 22. **Integrations** — Google/Outlook calendar sync, payment gateways (Stripe/PayPal/etc.).
     Calendar sync requires **Calendar** (#4); payments require **Invoices** (#15)
 

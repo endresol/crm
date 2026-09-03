@@ -68,6 +68,8 @@ model Workspace {
   meetingSchedules       MeetingSchedule[]
   meetings               Meeting[]
   activityLogs           ActivityLog[]
+  emailTemplates         EmailTemplate[]
+  emailLogs              EmailLog[]
 
   @@map("workspaces")
 }
@@ -105,6 +107,7 @@ model User {
   timeEntries    TimeEntry[]
   calendarEvents CalendarEvent[]
   activityLogs   ActivityLog[]
+  emailLogs      EmailLog[]
 
   @@index([workspaceId])
   @@map("users")
@@ -1025,4 +1028,86 @@ model ActivityLog {
 
   @@index([workspaceId, createdAt])
   @@map("activity_logs")
+}
+
+/// What triggers a template's compose-and-send flow (roadmap #21) — drives
+/// which template a "Send Email" action suggests by default (the invoice
+/// detail page suggests INVOICE_SENT templates, etc.), not which templates
+/// exist: any template can still be picked from anywhere. MEETING_CONFIRMATION/
+/// MEETING_CANCELLED/PORTAL_INVITE are the only types actually auto-sent
+/// (from bookMeeting/cancelMeeting and setContactPortalPassword) rather than
+/// picked by a human on a "Send Email" click — see the EmailLog doc comment.
+/// CUSTOM covers ad hoc templates not tied to a specific trigger.
+enum EmailTemplateType {
+  INVOICE_SENT
+  INVOICE_OVERDUE
+  PROPOSAL_SENT
+  CONTRACT_SENT
+  QUESTIONNAIRE_SENT
+  MEETING_CONFIRMATION
+  MEETING_CANCELLED
+  PORTAL_INVITE
+  CUSTOM
+}
+
+/// A reusable transactional-email template (roadmap #21) — `subject`/`body`
+/// carry {{merge.field}} tokens (features/email-templates/mergeFields.ts)
+/// resolved against whatever record the send is about. Kept separate from
+/// DocumentTemplate rather than reusing it: it needs a `subject`, and it
+/// represents a message to send, not document content to generate — the same
+/// "don't force unlike things into one shared table" reasoning DocumentTemplate's
+/// own doc comment gives for keeping Invoice/Proposal/Contract/Questionnaire
+/// content out of one polymorphic shape.
+model EmailTemplate {
+  id          String            @id @default(cuid())
+  workspaceId String
+  type        EmailTemplateType
+  name        String
+  subject     String
+  body        String            @default("")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([type])
+  @@map("email_templates")
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+}
+
+/// One row per outbound email (roadmap #21) — the send history / audit trail
+/// for this pass, since real inbound-reply monitoring is deliberately out of
+/// scope (see docs/roadmap.md). Mirrors ActivityLog's shape on purpose
+/// (entityType + url, no per-record FK) rather than inventing a different
+/// polymorphic pattern for this one table — same reasoning: Prisma has no
+/// true polymorphic relation, and a nullable FK per entity type is worse than
+/// just not having one. Every send here should also produce a normal
+/// ActivityLog row via the sending feature's own recordActivity call (e.g.
+/// "emailed Invoice Website Retainer to john@acme.com") — this table is the
+/// richer, email-specific record (the actual rendered content and the
+/// provider's outcome), not a replacement for the Activity feed.
+model EmailLog {
+  id                String             @id @default(cuid())
+  workspaceId       String
+  entityType        ActivityEntityType
+  url               String?
+  contactEmail      String
+  subject           String
+  body              String
+  status            EmailStatus
+  errorMessage      String?
+  providerMessageId String?
+  sentByUserId      String?
+  createdAt         DateTime           @default(now())
+
+  workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sentByUser User?     @relation(fields: [sentByUserId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@map("email_logs")
 }

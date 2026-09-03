@@ -1,6 +1,9 @@
 "use server";
 
 import { recordActivity } from "@/features/activity/service";
+import { sendAutoTemplatedEmail } from "@/features/email-templates/service";
+import { getWorkspace } from "@/features/workspace-settings/service";
+import { formatDateTime } from "@/lib/format";
 import { bookingSchema } from "./schemas";
 import { bookMeeting, getAvailableSlots } from "./service";
 
@@ -48,6 +51,30 @@ export async function bookMeetingPublicAction(
     action: `booked Meeting with ${result.meeting.bookerName} (${result.meeting.scheduleName})`,
     url: result.meeting.meetingScheduleId ? `/admin/meetings/${result.meeting.meetingScheduleId}` : null,
     actorName: `${result.meeting.bookerName} (guest)`,
+  });
+
+  // No {{meeting.url}} for a guest booking — there's no public "manage my
+  // booking" page to send them to (no per-booking token/lookup exists yet),
+  // unlike the Client Portal flow below which has /portal/meetings.
+  const workspace = await getWorkspace(result.meeting.workspaceId);
+  await sendAutoTemplatedEmail({
+    workspaceId: result.meeting.workspaceId,
+    type: "MEETING_CONFIRMATION",
+    entityType: "MEETING",
+    url: result.meeting.meetingScheduleId ? `/admin/meetings/${result.meeting.meetingScheduleId}` : null,
+    to: result.meeting.bookerEmail,
+    fromName: workspace.name,
+    mergeContext: {
+      workspace: { name: workspace.name },
+      meeting: {
+        scheduleName: result.meeting.scheduleName,
+        bookerName: result.meeting.bookerName,
+        time: formatDateTime(result.meeting.startAt, {
+          pattern: workspace.dateFormat,
+          timeZone: workspace.timezone,
+        }),
+      },
+    },
   });
 
   return { success: true };

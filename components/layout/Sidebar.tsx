@@ -19,6 +19,7 @@ import {
   InvoiceIcon,
   LeadIcon,
   LogOutIcon,
+  MailIcon,
   MeetingIcon,
   PeopleIcon,
   ProposalIcon,
@@ -93,6 +94,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Workspace",
     items: [
       { href: "/admin/activity", label: "Activity", icon: (p) => <ActivityIcon {...p} /> },
+      { href: "/admin/email-log", label: "Email Log", icon: (p) => <MailIcon {...p} /> },
+      { href: "/admin/email-templates", label: "Email Templates", icon: (p) => <TemplateIcon {...p} /> },
       { href: "/admin/team", label: "Team", icon: (p) => <TeamIcon {...p} /> },
       { href: "/admin/settings", label: "Settings", icon: (p) => <SettingsIcon {...p} /> },
     ],
