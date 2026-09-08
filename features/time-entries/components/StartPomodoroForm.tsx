@@ -5,25 +5,12 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
-import { logTimeAction, type TimeEntryActionState } from "../actions";
+import { startTimerAction, type PomodoroActionState } from "../pomodoro-actions";
+import type { ClientForLogging } from "./LogTimeForm";
 
-const initialState: TimeEntryActionState = {};
+const initialState: PomodoroActionState = {};
 
-export type ClientForLogging = {
-  id: string;
-  name: string;
-  projects: {
-    id: string;
-    name: string;
-    tasks: { id: string; title: string }[];
-  }[];
-};
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export function LogTimeForm({
+export function StartPomodoroForm({
   clients,
   fixedClientId,
   fixedProjectId,
@@ -36,7 +23,7 @@ export function LogTimeForm({
   onSaved: () => void;
   onCancel?: () => void;
 }) {
-  const [state, formAction, pending] = useActionState(logTimeAction, initialState);
+  const [state, formAction, pending] = useActionState(startTimerAction, initialState);
   const [clientId, setClientId] = useState(fixedClientId ?? "");
   const [projectId, setProjectId] = useState(fixedProjectId ?? "");
 
@@ -92,11 +79,8 @@ export function LogTimeForm({
         <input type="hidden" name="projectId" value={fixedProjectId} />
       ) : (
         <Select
-          // Prefixed — `clientId`/`projectId` both start out "", and this
-          // Select sits next to the Task Select below (keyed by `projectId`
-          // the same bare way); two sibling keys both resolving to "" is a
-          // real duplicate-key collision to React, not just visually
-          // similar values, and it warns "two children with the same key."
+          // See the same-named Select in LogTimeForm.tsx for why this is
+          // prefixed rather than bare `clientId`.
           key={`project-${clientId}`}
           name="projectId"
           label="Project"
@@ -123,14 +107,40 @@ export function LogTimeForm({
         ))}
       </Select>
 
-      <Input name="date" type="date" label="Date" defaultValue={todayISO()} required />
-
       <div style={{ display: "flex", gap: "var(--space-4)" }}>
-        <Input name="hours" type="number" label="Hours" min={0} defaultValue={0} />
-        <Input name="minutes" type="number" label="Minutes" min={0} max={59} defaultValue={0} />
+        <Input name="workMinutes" type="number" label="Work (min)" min={1} max={480} defaultValue={25} required />
+        <Input
+          name="shortBreakMinutes"
+          type="number"
+          label="Short break (min)"
+          min={1}
+          max={480}
+          defaultValue={5}
+          required
+        />
+      </div>
+      <div style={{ display: "flex", gap: "var(--space-4)" }}>
+        <Input
+          name="longBreakMinutes"
+          type="number"
+          label="Long break (min)"
+          min={1}
+          max={480}
+          defaultValue={20}
+          required
+        />
+        <Input
+          name="cyclesBeforeLongBreak"
+          type="number"
+          label="Sessions before long break"
+          min={1}
+          max={12}
+          defaultValue={4}
+          required
+        />
       </div>
 
-      <Input name="description" label="Description" optional placeholder="What did you work on?" />
+      <Input name="description" label="Description" optional placeholder="What are you working on?" />
 
       <Checkbox name="billable" defaultChecked label="Billable" />
 
@@ -141,7 +151,7 @@ export function LogTimeForm({
           </Button>
         )}
         <Button type="submit" disabled={pending}>
-          {pending ? "Logging…" : "Log time"}
+          {pending ? "Starting…" : "Start"}
         </Button>
       </div>
     </form>

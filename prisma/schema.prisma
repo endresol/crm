@@ -50,6 +50,7 @@ model Workspace {
   sops                   Sop[]
   calendarEvents         CalendarEvent[]
   timeEntries            TimeEntry[]
+  pomodoroTimers         PomodoroTimer[]
   projects               Project[]
   tasks                  Task[]
   milestones             Milestone[]
@@ -105,6 +106,7 @@ model User {
   workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   sessions       Session[]
   timeEntries    TimeEntry[]
+  pomodoroTimer  PomodoroTimer?
   calendarEvents CalendarEvent[]
   activityLogs   ActivityLog[]
   emailLogs      EmailLog[]
@@ -146,6 +148,7 @@ model Client {
 
   workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   timeEntries    TimeEntry[]
+  pomodoroTimers PomodoroTimer[]
   projects       Project[]
   contacts       Contact[]
   deals          Deal[]
@@ -333,11 +336,12 @@ model Project {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  tasks       Task[]
-  milestones  Milestone[]
-  timeEntries TimeEntry[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client         Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks          Task[]
+  milestones     Milestone[]
+  timeEntries    TimeEntry[]
+  pomodoroTimers PomodoroTimer[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -390,10 +394,11 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  milestone   Milestone?  @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-  timeEntries TimeEntry[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone      Milestone?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  timeEntries    TimeEntry[]
+  pomodoroTimers PomodoroTimer[]
 
   @@index([workspaceId])
   @@index([projectId])
@@ -428,6 +433,64 @@ model TimeEntry {
   @@index([projectId])
   @@index([taskId])
   @@map("time_entries")
+}
+
+enum PomodoroPhase {
+  WORK
+  SHORT_BREAK
+  LONG_BREAK
+}
+
+/// A running Pomodoro session — the "start a timer, and time gets logged to
+/// the client" flow from the Log Time button. One row per User (`userId` is
+/// `@unique`: a person only ever has one running session; starting a second
+/// is rejected rather than allowed to silently orphan the first), so it
+/// survives navigation and shows as a persistent widget in the Sidebar
+/// rather than living in component state.
+///
+/// Deliberately no auto-advance between phases — `phaseStartedAt` plus
+/// `workMinutes`/`shortBreakMinutes`/`longBreakMinutes` are just the
+/// *planned* length shown as a countdown; nothing forces a transition when
+/// that runs out; it counts past zero instead. The client explicitly clicks
+/// "Start break" / "Start next session" (advanceTimerPhase, in service.ts)
+/// whenever they're actually ready — mid-task overrun on either side of the
+/// break is the whole point (see docs/roadmap.md). Only a WORK phase ever
+/// produces a TimeEntry, for whatever was actually elapsed at that click —
+/// not the planned `workMinutes` — logged the moment the phase ends (by
+/// advancing or by Stop), so progress is never lost even if the session is
+/// abandoned mid-work. Breaks are never logged.
+///
+/// `cycleNumber` counts completed work sessions within the current set
+/// (1-based); reaching `cyclesBeforeLongBreak` on WORK's end triggers a
+/// LONG_BREAK instead of a SHORT_BREAK, and finishing that long break resets
+/// `cycleNumber` back to 1 — the classic Pomodoro cadence (default 25/5/20,
+/// every 4th), all adjustable per session at start.
+model PomodoroTimer {
+  id                    String        @id @default(cuid())
+  workspaceId           String
+  userId                String        @unique
+  clientId              String
+  projectId             String?
+  taskId                String?
+  description           String?
+  billable              Boolean       @default(true)
+  workMinutes           Int           @default(25)
+  shortBreakMinutes     Int           @default(5)
+  longBreakMinutes      Int           @default(20)
+  cyclesBeforeLongBreak Int           @default(4)
+  phase                 PomodoroPhase @default(WORK)
+  cycleNumber           Int           @default(1)
+  phaseStartedAt        DateTime      @default(now())
+  createdAt             DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  task      Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("pomodoro_timers")
 }
 
 enum ProductType {

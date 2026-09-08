@@ -22,8 +22,14 @@ export async function logTimeAction(
 
   const parsed = timeEntrySchema.safeParse({
     clientId: formData.get("clientId"),
-    projectId: formData.get("projectId"),
-    taskId: formData.get("taskId"),
+    // `?? ""`: the Project/Task <select> is disabled (not just empty) until
+    // a Client/Project is chosen, and a disabled field is excluded from
+    // FormData entirely — formData.get returns null rather than "" — which
+    // fails optionalId's z.string() check before .optional() ever gets a
+    // say. Same fix as features/invoices/actions.ts's templateId (see its
+    // comment) applied here.
+    projectId: formData.get("projectId") ?? "",
+    taskId: formData.get("taskId") ?? "",
     date: formData.get("date"),
     hours: formData.get("hours"),
     minutes: formData.get("minutes"),

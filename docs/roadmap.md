@@ -7,7 +7,8 @@ Done — see git log / SPEC.md: Auth, Clients, Time Tracking (scoped to Client),
 **Upgrade Time Tracking to log against Project/Task** (#13), **Document Templates system** (#14),
 **Invoices** (#15), **Proposals** (#16), **Contracts** (#17), **Questionnaires** (#18),
 **Client Portal** (#20), **Meeting Scheduler** (#19), **Activity log / notifications** (#23),
-**Email Templates** (#21).
+**Email Templates** (#21), **Pomodoro timer** (ad hoc — not part of the numbered backlog below,
+added directly on top of Time Tracking).
 
 `DocumentTemplate` is a single shared model (type: PROPOSAL/CONTRACT/INVOICE/QUESTIONNAIRE) with
 `{{merge.field}}` tokens (features/document-templates/mergeFields.ts) resolved against a Client/
@@ -98,6 +99,30 @@ EmailLog row and (on success) a normal ActivityLog entry via the sending feature
 recordActivity call. Trimmed: no inbound reply capture/threaded inbox (a natural #24 if picked back
 up), no automatic sends on status change, no CC/BCC/scheduling/attachments (no PDF generation
 exists in this clone either), no per-workspace sending domain.
+
+Pomodoro timer is a user-requested addition on top of Time Tracking, not part of the numbered
+backlog — the Log Time button now has a second tab ("Start Pomodoro") alongside the original
+manual-entry form. One `PomodoroTimer` row per User (`@unique` on userId — starting a second is
+rejected, not silently allowed to orphan the first) cycles `WORK → SHORT_BREAK → WORK → ... →
+LONG_BREAK` (every `cyclesBeforeLongBreak`th, default 4; all four durations — 25/5/20 minutes plus
+the cycle count — adjustable per session at start). Deliberately no auto-advance between phases,
+per the request: the countdown just keeps counting past zero into "+overtime" instead of forcing a
+transition, and only a click on "Start break" / "Start next session" (`advanceTimerPhase`, in
+features/time-entries/service.ts) or "Stop" actually moves on — covers both "let me finish this
+task before the break" and "the break ran long, I'll start work again now." Only a WORK phase ever
+produces a `TimeEntry` — for whatever was actually elapsed at that click, not the planned duration —
+so an abandoned session still logs real progress; breaks are never logged. Runs as a persistent
+widget in the Sidebar (fed from the /admin layout's own `getActiveTimer` call, not component state),
+so it survives navigating anywhere in the app and a page refresh doesn't lose it.
+
+While building this, found and fixed a real pre-existing bug in features/time-entries: the Project/
+Task `<select>` is `disabled` (not just empty) until a Client/Project is chosen, and a disabled
+field is excluded from `FormData` entirely — `formData.get` returns `null` rather than `""`, which
+fails `optionalId`'s `z.string()` check before `.optional()` ever gets a say, so logging time
+against a Client with no Project always failed with a generic "Invalid input". Same class of bug —
+and the same `?? ""` fix — as the Task milestone bug documented above for #23; this one had just
+never been exercised through the plain client-picker path (every other "Log Time" entry point pins
+`fixedClientId`, which skips the broken `<select>` entirely).
 
 Everything below this line is *not yet built*.
 

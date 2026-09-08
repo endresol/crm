@@ -1,0 +1,28 @@
+/* Same segmented-tab look as features/document-templates/components/
+   TemplatesPanel.module.css, reused here for the Log time / Start Pomodoro
+   mode switch inside the drawer. */
+
+.tabs {
+  display: inline-flex;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+}
+
+.tab {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.tabActive {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}

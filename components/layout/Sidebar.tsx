@@ -29,6 +29,7 @@ import {
   TeamIcon,
   TemplateIcon,
 } from "@/components/ui/icons";
+import { PomodoroWidget, type ActiveTimer } from "@/features/time-entries/components/PomodoroWidget";
 
 type NavItem = {
   href: string;
@@ -109,6 +110,7 @@ export function Sidebar({
   userEmail,
   userAvatarUrl,
   onLogout,
+  activeTimer,
 }: {
   workspaceName: string;
   workspaceLogoUrl?: string | null;
@@ -116,6 +118,7 @@ export function Sidebar({
   userEmail: string;
   userAvatarUrl?: string | null;
   onLogout: () => Promise<void>;
+  activeTimer?: ActiveTimer | null;
 }) {
   const pathname = usePathname();
   // Manually-collapsed group labels. Plain component state, not persisted —
@@ -206,6 +209,8 @@ export function Sidebar({
       })}
 
       <div className={styles.spacer} />
+
+      {activeTimer && <PomodoroWidget timer={activeTimer} />}
 
       <div className={styles.footer}>
         <Link href="/admin/profile" className={styles.profileLink}>
